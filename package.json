@@ -29,7 +29,7 @@
     "productName": "OpenResume Builder",
     "files": ["dist/**/*", "electron/**/*"],
     "directories": { "output": "release" },
-    "win": { "target": "nsis" },
+    "win": { "target": ["nsis", "portable"] },
     "mac": { "target": "dmg" },
     "linux": { "target": "AppImage" }
   }
