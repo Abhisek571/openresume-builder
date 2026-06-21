@@ -21,11 +21,13 @@
 - [ ] ATS keyword matching against a pasted job description
 
 ## Platforms
-- [ ] Build and test the macOS .dmg on an actual Mac (or via GitHub Actions macOS runner)
-- [ ] Portable Windows .exe build alongside the NSIS installer
+- [x] Portable Windows .exe build alongside the NSIS installer
+- [x] macOS .dmg built via GitHub Actions macOS runner (x64 + arm64)
+- [ ] Verify the macOS .dmg actually runs correctly on real Mac hardware — currently untested
+- [ ] Build and publish the Linux AppImage (target is configured, never actually built)
 - [ ] Android app via Capacitor (wraps the existing React/Vite build; Electron file I/O needs swapping for Capacitor Filesystem/Share plugins)
 
 ## Other
 - [ ] Automated tests (component tests for Editor/Preview, at minimum)
-- [ ] CI workflow on GitHub Actions (build + lint on push)
+- [ ] CI workflow for Windows/Linux builds + lint on push (mac build CI already exists)
 - [ ] Internationalization (i18n) for multi-language resumes
