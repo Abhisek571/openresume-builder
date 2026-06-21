@@ -20,7 +20,7 @@ Get the latest build from the [Releases page](https://github.com/AbhisekkumarSha
 
 - **Windows** — installer (`Setup.exe`) or portable (`.exe`)
 - **macOS** — `.dmg` for Apple Silicon or Intel (built via CI, currently untested on real Mac hardware)
-- **Linux** — `.AppImage` (built via CI, currently untested on a real Linux machine)
+- **Linux** — `.AppImage` (built via CI, currently untested on a real Linux machine) — see the [wiki's Linux install/run instructions](https://github.com/AbhisekkumarShandilya/openresume-builder/wiki/Installation#linux) for `chmod +x`, FUSE troubleshooting, and desktop integration
 
 These are unsigned builds, so Windows SmartScreen / macOS Gatekeeper will warn about an unidentified developer the first time you run one.
 
