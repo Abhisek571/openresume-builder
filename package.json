@@ -49,6 +49,12 @@
         "portable"
       ]
     },
+    "nsis": {
+      "artifactName": "OpenResume-Builder-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "OpenResume-Builder-Portable-${version}.${ext}"
+    },
     "mac": {
       "target": [
         {
@@ -59,6 +65,9 @@
           ]
         }
       ]
+    },
+    "dmg": {
+      "artifactName": "OpenResume-Builder-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage"
