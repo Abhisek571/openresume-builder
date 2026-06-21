@@ -1,4 +1,4 @@
-# Resume Builder
+# OpenResume Builder
 
 Open-source, cross-platform (Windows / macOS / Linux) resume builder built with **Electron + React + Vite**. Edit on the left, see a live A4 preview on the right, save/load as JSON, and export to PDF. An AI hook is stubbed out for later.
 
@@ -47,7 +47,7 @@ Output lands in the `release/` folder. On Windows you'll get an installer `.exe`
 
 ```
 electron/
-  main.js       Electron main process — window, file save/load, PDF export
+  main.cjs      Electron main process — window, file save/load, PDF export
   preload.cjs   Safe bridge between UI and file system
 src/
   main.jsx      React entry
@@ -62,7 +62,7 @@ src/
 ## Adding AI later
 
 See the comments in `src/ai.js`. The key rule: do the actual API call in
-`electron/main.js` (the main process) so your API key is never exposed in the
+`electron/main.cjs` (the main process) so your API key is never exposed in the
 UI. Expose it through `preload.cjs` the same way save/load/export work, then
 call it from `ai.js`.
 

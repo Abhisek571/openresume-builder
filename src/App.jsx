@@ -1,13 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { emptyResume } from './data.js';
 import Editor from './Editor.jsx';
 import Preview from './Preview.jsx';
 import { improveWithAI } from './ai.js';
 
+const STORAGE_KEY = 'resume-builder:resume';
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : emptyResume;
+  } catch {
+    return emptyResume;
+  }
+}
+
 export default function App() {
-  const [resume, setResume] = useState(emptyResume);
+  const [resume, setResume] = useState(loadFromStorage);
   const [template, setTemplate] = useState('classic');
   const [status, setStatus] = useState('');
+
+  // Autosave every change so work survives app restarts/crashes.
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(resume));
+  }, [resume]);
 
   const save = async () => {
     const res = await window.api.saveResume(resume);
