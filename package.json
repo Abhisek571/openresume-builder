@@ -71,6 +71,9 @@
     },
     "linux": {
       "target": "AppImage"
+    },
+    "appImage": {
+      "artifactName": "OpenResume-Builder-${version}.${ext}"
     }
   }
 }
