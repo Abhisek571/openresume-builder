@@ -24,10 +24,11 @@
 - [x] Portable Windows .exe build alongside the NSIS installer
 - [x] macOS .dmg built via GitHub Actions macOS runner (x64 + arm64)
 - [ ] Verify the macOS .dmg actually runs correctly on real Mac hardware — currently untested
-- [ ] Build and publish the Linux AppImage (target is configured, never actually built)
+- [x] Build and publish the Linux AppImage via GitHub Actions ubuntu-latest runner
+- [ ] Verify the Linux AppImage actually runs correctly on a real Linux machine — currently untested
 - [ ] Android app via Capacitor (wraps the existing React/Vite build; Electron file I/O needs swapping for Capacitor Filesystem/Share plugins)
 
 ## Other
 - [ ] Automated tests (component tests for Editor/Preview, at minimum)
-- [ ] CI workflow for Windows/Linux builds + lint on push (mac build CI already exists)
+- [ ] CI workflow for Windows builds + lint on push (mac and Linux build CI already exist)
 - [ ] Internationalization (i18n) for multi-language resumes

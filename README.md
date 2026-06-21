@@ -18,9 +18,9 @@ A free, open-source, cross-platform resume builder built with **Electron + React
 
 Get the latest build from the [Releases page](https://github.com/AbhisekkumarShandilya/openresume-builder/releases/latest):
 
-- **Windows** — installer (`Setup.exe`) or portable (`.exe`), `.7z` versions also available
+- **Windows** — installer (`Setup.exe`) or portable (`.exe`)
 - **macOS** — `.dmg` for Apple Silicon or Intel (built via CI, currently untested on real Mac hardware)
-- **Linux** — AppImage target is configured but not yet built/published; see [DEVELOPMENT.md](DEVELOPMENT.md) to build it yourself for now
+- **Linux** — `.AppImage` (built via CI, currently untested on a real Linux machine)
 
 These are unsigned builds, so Windows SmartScreen / macOS Gatekeeper will warn about an unidentified developer the first time you run one.
 
