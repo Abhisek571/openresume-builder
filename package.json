@@ -30,7 +30,7 @@
     "files": ["dist/**/*", "electron/**/*"],
     "directories": { "output": "release" },
     "win": { "target": ["nsis", "portable"] },
-    "mac": { "target": "dmg" },
+    "mac": { "target": "dmg", "arch": ["x64", "arm64"] },
     "linux": { "target": "AppImage" }
   }
 }
