@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (v2)
+## 2.0.0
 
 - Replaced the fixed Experience/Education/Skills layout with an ordered, customizable sections model: add, remove, and reorder whole sections (left nav, with ▲▼ controls and a live item count) and reorder individual entries within a section.
 - Added new section types: **Projects**, **Certifications**, and a free-form **Custom Section** (alongside Experience/Education/Skills); section titles are renameable.
