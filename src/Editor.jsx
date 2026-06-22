@@ -1,104 +1,182 @@
 import React from 'react';
+import { SECTION_TYPES } from './data.js';
 
-export default function Editor({ resume, setResume }) {
+export default function Editor({ resume, setResume, activeSection }) {
   const setPersonal = (field, value) =>
     setResume({ ...resume, personal: { ...resume.personal, [field]: value } });
 
-  const setExp = (id, field, value) =>
+  const updateSection = (id, updater) =>
     setResume({
       ...resume,
-      experience: resume.experience.map((e) =>
-        e.id === id ? { ...e, [field]: value } : e
-      ),
+      sections: resume.sections.map((s) => (s.id === id ? updater(s) : s)),
     });
 
-  const setBullets = (id, text) =>
-    setExp(id, 'bullets', text.split('\n').filter(Boolean));
+  const setTitle = (id, title) => updateSection(id, (s) => ({ ...s, title }));
+  const setItems = (id, items) => updateSection(id, (s) => ({ ...s, items }));
 
-  const addExp = () =>
-    setResume({
-      ...resume,
-      experience: [
-        ...resume.experience,
-        { id: Date.now(), role: '', company: '', start: '', end: '', bullets: [] },
-      ],
+  const updateItem = (sectionId, itemId, field, value) =>
+    updateSection(sectionId, (s) => ({
+      ...s,
+      items: s.items.map((it) => (it.id === itemId ? { ...it, [field]: value } : it)),
+    }));
+
+  const setBullets = (sectionId, itemId, text) =>
+    updateItem(sectionId, itemId, 'bullets', text.split('\n').filter(Boolean));
+
+  const addItem = (section) =>
+    updateSection(section.id, (s) => ({ ...s, items: [...s.items, SECTION_TYPES[s.type].newItem()] }));
+
+  const removeItem = (sectionId, itemId) =>
+    updateSection(sectionId, (s) => ({ ...s, items: s.items.filter((it) => it.id !== itemId) }));
+
+  const moveItem = (sectionId, index, dir) =>
+    updateSection(sectionId, (s) => {
+      const j = index + dir;
+      if (j < 0 || j >= s.items.length) return s;
+      const items = [...s.items];
+      [items[index], items[j]] = [items[j], items[index]];
+      return { ...s, items };
     });
 
-  const removeExp = (id) =>
-    setResume({ ...resume, experience: resume.experience.filter((e) => e.id !== id) });
+  const CardControls = ({ index, total, onRemove }) => (
+    <div className="card-controls">
+      <button title="Move up" disabled={index === 0} onClick={() => moveItem(section.id, index, -1)}>▲</button>
+      <button title="Move down" disabled={index === total - 1} onClick={() => moveItem(section.id, index, 1)}>▼</button>
+      <button className="danger" onClick={onRemove}>Remove</button>
+    </div>
+  );
 
-  const setEdu = (id, field, value) =>
-    setResume({
-      ...resume,
-      education: resume.education.map((e) =>
-        e.id === id ? { ...e, [field]: value } : e
-      ),
-    });
+  if (activeSection === 'personal') {
+    const p = resume.personal;
+    return (
+      <div className="editor">
+        <h2>Personal</h2>
+        <input placeholder="Name" value={p.name} onChange={(e) => setPersonal('name', e.target.value)} />
+        <input placeholder="Title" value={p.title} onChange={(e) => setPersonal('title', e.target.value)} />
+        <input placeholder="Email" value={p.email} onChange={(e) => setPersonal('email', e.target.value)} />
+        <input placeholder="Phone" value={p.phone} onChange={(e) => setPersonal('phone', e.target.value)} />
+        <input placeholder="Location" value={p.location} onChange={(e) => setPersonal('location', e.target.value)} />
+        <input placeholder="Website" value={p.website} onChange={(e) => setPersonal('website', e.target.value)} />
+        <textarea placeholder="Summary" value={p.summary} onChange={(e) => setPersonal('summary', e.target.value)} />
+      </div>
+    );
+  }
 
-  const addEdu = () =>
-    setResume({
-      ...resume,
-      education: [
-        ...resume.education,
-        { id: Date.now(), degree: '', school: '', start: '', end: '' },
-      ],
-    });
-
-  const removeEdu = (id) =>
-    setResume({ ...resume, education: resume.education.filter((e) => e.id !== id) });
-
-  const p = resume.personal;
+  const section = resume.sections.find((s) => s.id === activeSection);
+  if (!section) return <div className="editor"><p>Section not found.</p></div>;
 
   return (
     <div className="editor">
-      <h2>Personal</h2>
-      <input placeholder="Name" value={p.name} onChange={(e) => setPersonal('name', e.target.value)} />
-      <input placeholder="Title" value={p.title} onChange={(e) => setPersonal('title', e.target.value)} />
-      <input placeholder="Email" value={p.email} onChange={(e) => setPersonal('email', e.target.value)} />
-      <input placeholder="Phone" value={p.phone} onChange={(e) => setPersonal('phone', e.target.value)} />
-      <input placeholder="Location" value={p.location} onChange={(e) => setPersonal('location', e.target.value)} />
-      <input placeholder="Website" value={p.website} onChange={(e) => setPersonal('website', e.target.value)} />
-      <textarea placeholder="Summary" value={p.summary} onChange={(e) => setPersonal('summary', e.target.value)} />
+      <h2>
+        <input
+          className="section-title-input"
+          value={section.title}
+          onChange={(e) => setTitle(section.id, e.target.value)}
+        />
+      </h2>
 
-      <h2>Experience <button onClick={addExp}>+ Add</button></h2>
-      {resume.experience.map((x) => (
+      {section.type === 'skills' && (
+        <div className="skills-list">
+          {section.items.map((skill, i) => (
+            <div className="skill-row" key={i}>
+              <input
+                placeholder="Skill"
+                value={skill}
+                onChange={(e) => {
+                  const items = [...section.items];
+                  items[i] = e.target.value;
+                  setItems(section.id, items);
+                }}
+              />
+              <button className="danger" title="Remove" onClick={() => setItems(section.id, section.items.filter((_, idx) => idx !== i))}>×</button>
+            </div>
+          ))}
+          <button onClick={() => setItems(section.id, [...section.items, ''])}>+ Add Skill</button>
+        </div>
+      )}
+
+      {section.type === 'custom' && (
+        <textarea
+          placeholder="One bullet per line (indent a line with a leading space for a sub-bullet)"
+          value={section.items.join('\n')}
+          onChange={(e) => setItems(section.id, e.target.value.split('\n').filter(Boolean))}
+        />
+      )}
+
+      {section.type === 'experience' && section.items.map((x, i) => (
         <div className="card" key={x.id}>
-          <input placeholder="Role" value={x.role} onChange={(e) => setExp(x.id, 'role', e.target.value)} />
-          <input placeholder="Company" value={x.company} onChange={(e) => setExp(x.id, 'company', e.target.value)} />
+          <CardControls index={i} total={section.items.length} onRemove={() => removeItem(section.id, x.id)} />
+          <input placeholder="Company" value={x.company} onChange={(e) => updateItem(section.id, x.id, 'company', e.target.value)} />
           <div className="row">
-            <input placeholder="Start" value={x.start} onChange={(e) => setExp(x.id, 'start', e.target.value)} />
-            <input placeholder="End" value={x.end} onChange={(e) => setExp(x.id, 'end', e.target.value)} />
+            <input placeholder="Role" value={x.role} onChange={(e) => updateItem(section.id, x.id, 'role', e.target.value)} />
+            <input placeholder="City, ST" value={x.location} onChange={(e) => updateItem(section.id, x.id, 'location', e.target.value)} />
+          </div>
+          <div className="row">
+            <input placeholder="Start" value={x.start} onChange={(e) => updateItem(section.id, x.id, 'start', e.target.value)} />
+            <input placeholder="End" value={x.end} onChange={(e) => updateItem(section.id, x.id, 'end', e.target.value)} />
+          </div>
+          <textarea
+            placeholder="One bullet per line (indent a line with a leading space for a sub-bullet)"
+            value={x.bullets.join('\n')}
+            onChange={(e) => setBullets(section.id, x.id, e.target.value)}
+          />
+        </div>
+      ))}
+
+      {section.type === 'education' && section.items.map((x, i) => (
+        <div className="card" key={x.id}>
+          <CardControls index={i} total={section.items.length} onRemove={() => removeItem(section.id, x.id)} />
+          <input placeholder="School" value={x.school} onChange={(e) => updateItem(section.id, x.id, 'school', e.target.value)} />
+          <div className="row">
+            <input placeholder="Degree" value={x.degree} onChange={(e) => updateItem(section.id, x.id, 'degree', e.target.value)} />
+            <input placeholder="City, ST" value={x.location} onChange={(e) => updateItem(section.id, x.id, 'location', e.target.value)} />
+          </div>
+          <div className="row">
+            <input placeholder="Start" value={x.start} onChange={(e) => updateItem(section.id, x.id, 'start', e.target.value)} />
+            <input placeholder="End" value={x.end} onChange={(e) => updateItem(section.id, x.id, 'end', e.target.value)} />
+          </div>
+          <textarea
+            placeholder="One bullet per line (optional)"
+            value={(x.bullets || []).join('\n')}
+            onChange={(e) => setBullets(section.id, x.id, e.target.value)}
+          />
+        </div>
+      ))}
+
+      {section.type === 'projects' && section.items.map((x, i) => (
+        <div className="card" key={x.id}>
+          <CardControls index={i} total={section.items.length} onRemove={() => removeItem(section.id, x.id)} />
+          <input placeholder="Project name" value={x.name} onChange={(e) => updateItem(section.id, x.id, 'name', e.target.value)} />
+          <div className="row">
+            <input placeholder="Role (optional)" value={x.role} onChange={(e) => updateItem(section.id, x.id, 'role', e.target.value)} />
+            <input placeholder="Link (optional)" value={x.link} onChange={(e) => updateItem(section.id, x.id, 'link', e.target.value)} />
+          </div>
+          <div className="row">
+            <input placeholder="Start" value={x.start} onChange={(e) => updateItem(section.id, x.id, 'start', e.target.value)} />
+            <input placeholder="End" value={x.end} onChange={(e) => updateItem(section.id, x.id, 'end', e.target.value)} />
           </div>
           <textarea
             placeholder="One bullet per line"
             value={x.bullets.join('\n')}
-            onChange={(e) => setBullets(x.id, e.target.value)}
+            onChange={(e) => setBullets(section.id, x.id, e.target.value)}
           />
-          <button className="danger" onClick={() => removeExp(x.id)}>Remove</button>
         </div>
       ))}
 
-      <h2>Education <button onClick={addEdu}>+ Add</button></h2>
-      {resume.education.map((x) => (
+      {section.type === 'certifications' && section.items.map((x, i) => (
         <div className="card" key={x.id}>
-          <input placeholder="Degree" value={x.degree} onChange={(e) => setEdu(x.id, 'degree', e.target.value)} />
-          <input placeholder="School" value={x.school} onChange={(e) => setEdu(x.id, 'school', e.target.value)} />
+          <CardControls index={i} total={section.items.length} onRemove={() => removeItem(section.id, x.id)} />
+          <input placeholder="Certification name" value={x.name} onChange={(e) => updateItem(section.id, x.id, 'name', e.target.value)} />
           <div className="row">
-            <input placeholder="Start" value={x.start} onChange={(e) => setEdu(x.id, 'start', e.target.value)} />
-            <input placeholder="End" value={x.end} onChange={(e) => setEdu(x.id, 'end', e.target.value)} />
+            <input placeholder="Issuer" value={x.issuer} onChange={(e) => updateItem(section.id, x.id, 'issuer', e.target.value)} />
+            <input placeholder="Date" value={x.date} onChange={(e) => updateItem(section.id, x.id, 'date', e.target.value)} />
           </div>
-          <button className="danger" onClick={() => removeEdu(x.id)}>Remove</button>
         </div>
       ))}
 
-      <h2>Skills</h2>
-      <textarea
-        placeholder="Comma separated"
-        value={resume.skills.join(', ')}
-        onChange={(e) =>
-          setResume({ ...resume, skills: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
-        }
-      />
+      {SECTION_TYPES[section.type].newItem && (
+        <button onClick={() => addItem(section)}>+ Add {SECTION_TYPES[section.type].label.replace(/s$/, '')}</button>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('node:path');
 const fs = require('node:fs/promises');
@@ -68,6 +68,29 @@ function createWindow() {
   }
 }
 
+// Open/Save As live in the File menu; the actual dialog + file I/O still
+// runs in the renderer (via the same save-resume/load-resume IPC the
+// toolbar used), so these just ping it to run that flow.
+function buildMenu() {
+  const isMac = process.platform === 'darwin';
+  const template = [
+    ...(isMac ? [{ role: 'appMenu' }] : []),
+    {
+      label: 'File',
+      submenu: [
+        { label: 'Open…', accelerator: 'CmdOrCtrl+O', click: () => win.webContents.send('menu-open-resume') },
+        { label: 'Save As…', accelerator: 'CmdOrCtrl+Shift+S', click: () => win.webContents.send('menu-save-resume') },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit' },
+      ],
+    },
+    { role: 'editMenu' },
+    { role: 'viewMenu' },
+    { role: 'windowMenu' },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 // Save resume JSON to disk
 ipcMain.handle('save-resume', async (_e, data) => {
   const { filePath, canceled } = await dialog.showSaveDialog(win, {
@@ -110,6 +133,7 @@ ipcMain.handle('export-pdf', async () => {
 });
 
 app.whenReady().then(() => {
+  buildMenu();
   createWindow();
   checkForUpdates();
 });
