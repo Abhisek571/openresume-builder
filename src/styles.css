@@ -16,12 +16,85 @@ body, html, #root { margin: 0; height: 100%; font-family: system-ui, sans-serif;
 .toolbar .ai-btn { background: #7c3aed; }
 .toolbar .status { font-size: 12px; opacity: 0.8; min-width: 90px; }
 
+.toolbar-left { position: relative; display: flex; align-items: center; gap: 10px; }
+.icon-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
+.save-status { font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.save-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.save-status.saved { color: #86efac; }
+.save-status.saved::before { background: #22c55e; }
+.save-status.saving { color: #fcd34d; }
+.save-status.saving::before { background: #f59e0b; }
+
+.toolbar-group { position: relative; display: flex; gap: 8px; }
+
+.popover {
+  position: absolute; top: 38px; left: 0; z-index: 50; width: 260px;
+  background: #111827; color: #fff; border-radius: 8px; padding: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #374151;
+}
+.popover-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.popover-close { background: transparent; padding: 0 4px; font-size: 16px; color: #9ca3af; }
+.popover-close:hover { background: transparent; color: #fff; }
+.popover-hint { font-size: 11px; color: #9ca3af; margin: 4px 0 8px; }
+.popover-action { display: block; width: 100%; margin-top: 6px; text-align: left; }
+.popover-action.danger { background: #7f1d1d; }
+.popover-action.danger:hover:not(:disabled) { background: #ef4444; }
+.popover-action:disabled { opacity: 0.4; cursor: default; }
+
+.snapshots-popover { width: 460px; }
+.snapshot-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+.snapshot-table th { text-align: left; color: #9ca3af; font-weight: 600; padding: 4px 6px; border-bottom: 1px solid #374151; }
+.snapshot-table td { padding: 5px 6px; border-bottom: 1px solid #1f2937; vertical-align: middle; }
+.snapshot-name-input {
+  width: 100%; margin: 0; padding: 3px 6px; font-size: 12px; color: #fff;
+  background: #1f2937; border: 1px solid transparent; border-radius: 4px;
+}
+.snapshot-name-input:hover, .snapshot-name-input:focus { border-color: #4b5563; outline: none; }
+.snapshot-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.snapshot-actions button { padding: 3px 8px; font-size: 11px; }
+.snapshot-actions .danger { background: #7f1d1d; }
+.snapshot-actions .danger:hover { background: #ef4444; }
+
 .workspace { display: flex; flex: 1; overflow: hidden; }
-.editor-pane { width: 42%; overflow-y: auto; padding: 16px; background: #f3f4f6; }
+
+.nav-pane {
+  width: 170px; flex-shrink: 0; overflow-y: auto; padding: 12px 8px;
+  background: #111827; display: flex; flex-direction: column; gap: 4px;
+}
+.nav-pane .nav-item {
+  text-align: left; background: transparent; color: #d1d5db; border: 0;
+  border-radius: 6px; padding: 8px 10px; font-size: 13px; cursor: pointer; flex-shrink: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nav-pane .nav-item:hover { background: #1f2937; }
+.nav-pane .nav-item.active { background: #2563eb; color: #fff; }
+.nav-pane .nav-row { display: flex; align-items: center; gap: 2px; }
+.nav-pane .nav-row .nav-item { flex: 1; }
+.nav-pane .nav-arrows { display: flex; gap: 2px; flex-shrink: 0; }
+.nav-pane .nav-arrows button {
+  background: transparent; color: #9ca3af; border: 0; cursor: pointer;
+  font-size: 10px; padding: 2px 4px; border-radius: 4px;
+}
+.nav-pane .nav-arrows button:hover:not(:disabled) { background: #374151; color: #fff; }
+.nav-pane .nav-arrows button:disabled { opacity: 0.3; cursor: default; }
+.nav-pane .nav-arrows .nav-remove:hover:not(:disabled) { background: #ef4444; color: #fff; }
+.nav-pane .nav-add {
+  margin-top: 8px; padding: 6px 8px; border: 1px dashed #374151; border-radius: 6px;
+  background: #1f2937; color: #d1d5db; font-size: 12px; cursor: pointer;
+}
+
+.editor-pane { width: 36%; overflow-y: auto; padding: 16px; background: #f3f4f6; }
 .preview-pane { flex: 1; overflow-y: auto; padding: 24px; background: #6b7280; display: flex; justify-content: center; }
 
-.editor h2 { font-size: 15px; margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
+.editor h2 { font-size: 15px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
 .editor h2 button { font-size: 12px; padding: 2px 8px; }
+.editor h2 .section-title-input {
+  font-size: 15px; font-weight: 600; border: 0; background: transparent; padding: 4px 0;
+  border-bottom: 1px dashed transparent; width: 100%;
+}
+.editor h2 .section-title-input:hover, .editor h2 .section-title-input:focus {
+  border-bottom-color: #9ca3af; outline: none;
+}
 .editor input, .editor textarea {
   width: 100%; padding: 8px; margin: 4px 0; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;
 }
@@ -30,6 +103,19 @@ body, html, #root { margin: 0; height: 100%; font-family: system-ui, sans-serif;
 .editor .card { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e5e7eb; }
 .editor button { cursor: pointer; border: 0; border-radius: 6px; padding: 4px 10px; background: #2563eb; color: #fff; }
 .editor button.danger { background: #ef4444; margin-top: 6px; }
+.editor .card-controls { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 6px; }
+.editor .card-controls button { padding: 3px 8px; font-size: 12px; }
+.editor .card-controls button:disabled { opacity: 0.35; cursor: default; }
+.editor .card-controls button.danger { margin-top: 0; }
+
+.editor .skills-list { display: flex; flex-direction: column; gap: 6px; }
+.editor .skill-row { display: flex; gap: 6px; align-items: center; }
+.editor .skill-row input { margin: 0; flex: 1; }
+.editor .skill-row .danger {
+  flex-shrink: 0; margin-top: 0; width: 30px; height: 30px; padding: 0;
+  font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+.editor .skills-list > button:last-child { align-self: flex-start; margin-top: 2px; }
 
 /* Resume sheet — sized like A4 */
 .resume-sheet {
@@ -54,6 +140,29 @@ body, html, #root { margin: 0; height: 100%; font-family: system-ui, sans-serif;
 .tpl-modern .r-header { text-align: left; border-bottom: 4px solid #7c3aed; }
 .tpl-modern h3 { color: #7c3aed; border-color: #ddd6fe; }
 .tpl-modern .r-chip { background: #ede9fe; }
+
+/* Resumatic template variant — serif, bold-name header, company/date and role/location rows */
+.tpl-resumatic { font-family: Georgia, 'Times New Roman', Times, serif; }
+.tpl-resumatic .r-header { text-align: left; border-bottom: 1.5px solid #111; padding-bottom: 10px; }
+.tpl-resumatic .r-header h1 { font-size: 28px; font-weight: 700; letter-spacing: 0.5px; }
+.tpl-resumatic .r-contact { text-align: center; font-size: 12px; margin-top: 6px; }
+.tpl-resumatic .r-summary { font-size: 13px; margin: 10px 0 0; }
+.tpl-resumatic section { margin-bottom: 12px; }
+.tpl-resumatic h3 {
+  text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;
+  border-bottom: 1px solid #111; padding-bottom: 2px; font-weight: 700; margin-bottom: 6px;
+}
+.tpl-resumatic .r-entry { margin: 8px 0; }
+.tpl-resumatic .r-entry-head { display: flex; justify-content: space-between; font-weight: 700; font-size: 13px; }
+.tpl-resumatic .r-entry-sub {
+  display: flex; justify-content: space-between; font-style: italic; font-size: 12.5px; margin-bottom: 4px;
+}
+.tpl-resumatic .r-bullets { list-style: none; margin: 4px 0 0; padding: 0; }
+.tpl-resumatic .r-bullets li { position: relative; padding-left: 16px; font-size: 12.5px; margin: 2px 0; }
+.tpl-resumatic .r-bullets li::before { content: '▪'; position: absolute; left: 0; top: 0; }
+.tpl-resumatic .r-bullets li.sub { margin-left: 22px; }
+.tpl-resumatic .r-bullets li.sub::before { content: '○'; font-size: 9px; top: 3px; }
+.tpl-resumatic .r-skills-text { font-size: 12.5px; margin: 0; }
 
 /* Print / PDF: only the sheet shows, full bleed */
 @media print {

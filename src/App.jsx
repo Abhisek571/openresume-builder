@@ -1,42 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { emptyResume } from './data.js';
+import React, { useState, useEffect, useRef } from 'react';
+import { emptyResume, normalizeResume } from './data.js';
+import SectionNav from './SectionNav.jsx';
 import Editor from './Editor.jsx';
 import Preview from './Preview.jsx';
 import { improveWithAI } from './ai.js';
 
 const STORAGE_KEY = 'resume-builder:resume';
+const SNAPSHOTS_KEY = 'resume-builder:snapshots';
 
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : emptyResume;
+    return raw ? normalizeResume(JSON.parse(raw)) : emptyResume;
   } catch {
     return emptyResume;
   }
 }
 
+function loadSnapshots() {
+  try {
+    const raw = localStorage.getItem(SNAPSHOTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
   const [resume, setResume] = useState(loadFromStorage);
-  const [template, setTemplate] = useState('classic');
+  const [template, setTemplate] = useState('resumatic');
   const [status, setStatus] = useState('');
+  const [activeSection, setActiveSection] = useState('personal');
+  const [saveState, setSaveState] = useState('saved');
+  const [snapshots, setSnapshots] = useState(loadSnapshots);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSnapshots, setShowSnapshots] = useState(false);
+  const isFirstRender = useRef(true);
+  const resumeRef = useRef(resume);
+  resumeRef.current = resume;
 
-  // Autosave every change so work survives app restarts/crashes.
+  // Autosave (debounced) — shows "Saving…" then "All changes saved" so the
+  // user can see their work is persisted without an explicit Save button.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(resume));
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setSaveState('saving');
+    const t = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(resume));
+      setSaveState('saved');
+    }, 400);
+    return () => clearTimeout(t);
   }, [resume]);
-
-  const save = async () => {
-    const res = await window.api.saveResume(resume);
-    setStatus(res.ok ? 'Saved.' : 'Save cancelled.');
-  };
 
   const load = async () => {
     const res = await window.api.loadResume();
     if (res.ok) {
-      setResume(res.data);
+      setResume(normalizeResume(res.data));
+      setActiveSection('personal');
       setStatus('Loaded.');
     }
   };
+
+  const saveAs = async () => {
+    const res = await window.api.saveResume(resumeRef.current);
+    setStatus(res.ok ? 'Saved.' : 'Save cancelled.');
+  };
+
+  // File > Open / Save As live in the native menu bar; they ping us here to
+  // run the same dialog flow the old toolbar buttons used.
+  useEffect(() => {
+    window.api.onMenuOpen(load);
+    window.api.onMenuSaveAs(saveAs);
+  }, []);
 
   const exportPDF = async () => {
     const res = await window.api.exportPDF();
@@ -49,17 +86,137 @@ export default function App() {
     await improveWithAI(resume);
   };
 
+  const persistSnapshots = (next) => {
+    setSnapshots(next);
+    localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(next));
+  };
+
+  const makeSnapshot = () => {
+    const snap = { id: Date.now(), name: '', label: new Date().toLocaleString(), data: resume };
+    persistSnapshots([snap, ...snapshots].slice(0, 20));
+    setStatus('Snapshot saved.');
+  };
+
+  const renameSnapshot = (id, name) =>
+    persistSnapshots(snapshots.map((s) => (s.id === id ? { ...s, name } : s)));
+
+  const restoreSnapshot = (snap) => {
+    const ok = window.confirm(
+      `Restore snapshot "${snap.name || snap.label}" (${snap.label})?\n\nThis replaces everything currently in the editor. Changes made since this snapshot was taken will be lost unless you've snapshotted them too.`
+    );
+    if (!ok) return;
+    setResume(normalizeResume(snap.data));
+    setActiveSection('personal');
+    setShowSnapshots(false);
+    setStatus('Snapshot restored.');
+  };
+
+  const deleteSnapshot = (id) => {
+    const ok = window.confirm('Delete this snapshot? This cannot be undone.');
+    if (!ok) return;
+    persistSnapshots(snapshots.filter((s) => s.id !== id));
+  };
+
+  const resetResume = () => {
+    const ok = window.confirm('Reset to a blank resume? This replaces everything currently in the editor.');
+    if (!ok) return;
+    setResume(JSON.parse(JSON.stringify(emptyResume)));
+    setActiveSection('personal');
+    setShowSettings(false);
+    setStatus('Resume reset.');
+  };
+
+  const clearSnapshots = () => {
+    const ok = window.confirm('Delete all snapshots? This cannot be undone.');
+    if (!ok) return;
+    persistSnapshots([]);
+    setShowSettings(false);
+  };
+
   return (
     <div className="app">
       <header className="toolbar">
-        <strong>OpenResume Builder</strong>
+        <div className="toolbar-left">
+          <button className="icon-btn" title="Settings" onClick={() => { setShowSettings((v) => !v); setShowSnapshots(false); }}>
+            ⚙
+          </button>
+          {showSettings && (
+            <div className="popover">
+              <div className="popover-header">
+                <strong>Settings</strong>
+                <button className="popover-close" onClick={() => setShowSettings(false)}>×</button>
+              </div>
+              <p className="popover-hint">Changes autosave automatically to this device.</p>
+              <button className="popover-action danger" onClick={resetResume}>Reset resume to blank</button>
+            </div>
+          )}
+          <span className={`save-status ${saveState}`}>
+            {saveState === 'saving' ? 'Saving…' : 'All changes saved'}
+          </span>
+        </div>
+
         <div className="spacer" />
+
         <select value={template} onChange={(e) => setTemplate(e.target.value)}>
+          <option value="resumatic">Resumatic</option>
           <option value="classic">Classic</option>
           <option value="modern">Modern</option>
         </select>
-        <button onClick={load}>Open</button>
-        <button onClick={save}>Save</button>
+
+        <div className="toolbar-group">
+          <button onClick={makeSnapshot}>📸 Make Snapshot</button>
+          <button onClick={() => { setShowSnapshots((v) => !v); setShowSettings(false); }}>
+            Snapshot Restore ({snapshots.length})
+          </button>
+          {showSnapshots && (
+            <div className="popover snapshots-popover">
+              <div className="popover-header">
+                <strong>Snapshots</strong>
+                <button className="popover-close" onClick={() => setShowSnapshots(false)}>×</button>
+              </div>
+              <button className="popover-action danger" disabled={snapshots.length === 0} onClick={clearSnapshots}>
+                Clear All Snapshots
+              </button>
+              {snapshots.length === 0 ? (
+                <p className="popover-hint">No snapshots yet — take one before making risky changes.</p>
+              ) : (
+                <table className="snapshot-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Date &amp; Time</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snapshots.map((s, i) => (
+                      <tr key={s.id}>
+                        <td>{i + 1}</td>
+                        <td>
+                          <input
+                            className="snapshot-name-input"
+                            placeholder="Untitled"
+                            value={s.name || ''}
+                            onChange={(e) => renameSnapshot(s.id, e.target.value)}
+                          />
+                        </td>
+                        <td>{s.label}</td>
+                        <td>
+                          <div className="snapshot-actions">
+                            <button onClick={() => restoreSnapshot(s)}>Restore</button>
+                            <button className="danger" onClick={() => deleteSnapshot(s.id)}>Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+
         <button onClick={exportPDF}>Export PDF</button>
         <button className="ai-btn" onClick={aiImprove} title="Add AI later">
           ✨ Improve with AI
@@ -68,8 +225,14 @@ export default function App() {
       </header>
 
       <main className="workspace">
+        <SectionNav
+          resume={resume}
+          setResume={setResume}
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
+        />
         <section className="editor-pane">
-          <Editor resume={resume} setResume={setResume} />
+          <Editor resume={resume} setResume={setResume} activeSection={activeSection} />
         </section>
         <section className="preview-pane">
           <Preview resume={resume} template={template} />
