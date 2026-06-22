@@ -117,6 +117,13 @@ body, html, #root { margin: 0; height: 100%; overflow-x: hidden; font-family: sy
 .template-thumb-inner { transform: scale(0.302); transform-origin: top left; width: 794px; }
 .template-label { font-weight: 600; font-size: 14px; color: #111; }
 
+.format-toolbar {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.format-toolbar button { width: 28px; height: 28px; padding: 0; font-size: 13px; }
+.format-hint { font-size: 11px; color: #6b7280; }
+
 .editor h2 { font-size: 15px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
 .editor h2 button { font-size: 12px; padding: 2px 8px; }
 .editor h2 .section-title-input {
@@ -194,6 +201,12 @@ body, html, #root { margin: 0; height: 100%; overflow-x: hidden; font-family: sy
 .tpl-resumatic .r-bullets li.sub { margin-left: 22px; }
 .tpl-resumatic .r-bullets li.sub::before { content: '○'; font-size: 9px; top: 3px; }
 .tpl-resumatic .r-skills-text { font-size: 12.5px; margin: 0; }
+
+/* Numbered list variant — toggled per-field via the "1." formatting button */
+.tpl-resumatic .r-bullets.ordered { counter-reset: r-bullets-count; }
+.tpl-resumatic .r-bullets.ordered li:not(.sub) { counter-increment: r-bullets-count; }
+.tpl-resumatic .r-bullets.ordered li:not(.sub)::before { content: counter(r-bullets-count) '.'; }
+.resume-sheet ul.ordered { list-style-type: decimal; }
 
 /* Print / PDF: only the sheet shows, full bleed */
 @media print {
