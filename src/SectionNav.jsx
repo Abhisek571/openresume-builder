@@ -23,7 +23,7 @@ export default function SectionNav({ resume, setResume, activeSection, setActive
 
   // Skills/custom store raw strings (which can be blank while typing a new
   // one), so count only the filled-in ones rather than the raw array length.
-  const countItems = (s) => (s.type === 'skills' || s.type === 'custom' ? s.items.filter(Boolean).length : s.items.length);
+  const countItems = (s) => (s.type === 'skills' || s.type === 'custom' ? s.items.filter((i) => i.trim()).length : s.items.length);
 
   return (
     <nav className="nav-pane">

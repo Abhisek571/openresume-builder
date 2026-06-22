@@ -11,7 +11,11 @@
 - Added a debounced autosave status indicator ("Saving…" / "All changes saved") in the toolbar.
 - Moved **Open** and **Save As** into the native **File** menu (Ctrl+O / Ctrl+Shift+S), removed from the toolbar.
 - Added a **Settings** (⚙) menu with a "Reset resume to blank" action.
-- Reworked the toolbar into two rows and fixed a CSS overflow bug that produced a stray horizontal scrollbar across the whole window.
+- Reworked the toolbar into two rows: a top row with Settings (far left) and a single centered pill grouping the Template/Details/Final Preview tabs with Export PDF, and a bottom row with Make Snapshot/Snapshot Restore (left), the autosave status, and Improve with AI (right). Also fixed a CSS overflow bug that produced a stray horizontal scrollbar across the whole window, and fixed the Settings popover getting clipped off the right edge of the window.
+- Added basic text formatting: a Bold/Italic toolbar in the editor that wraps selected text with `**bold**`/`*italic*` markup, rendered as actual bold/italic in the Summary and bullet points on the resume preview.
+- Added a "1." toolbar button to switch a focused bullet list (per entry, or per custom section) between the default bulleted style and a numbered (1, 2, 3…) style.
+- Made bullet list fields behave more like Word/LibreOffice: Tab/Shift+Tab indents/outdents the current line into a sub-bullet, Enter continues the list at the same indent level (instead of resetting to top-level), an empty indented line outdents on Enter instead of nesting deeper, and Backspace at the start of an indented line's text outdents it. Also fixed a bug where pressing Enter to start a brand-new bullet could silently swallow the newline.
+- Fixed a stale-state bug where clicking Bold/Italic/"1." in the format toolbar after typing for a while (without re-focusing the field) could revert that field to its older content — the toolbar's stored update functions now always read the latest resume state instead of the snapshot from when the field was focused.
 
 ## 1.1.0
 

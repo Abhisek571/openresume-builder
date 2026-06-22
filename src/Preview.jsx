@@ -1,11 +1,15 @@
 import React from 'react';
+import { renderFormatted } from './format.jsx';
 
-function Bullets({ bullets, className }) {
-  if (!bullets || bullets.length === 0) return null;
+function Bullets({ bullets, className, ordered }) {
+  // The editor keeps blank lines around while typing (e.g. the line you're
+  // about to fill in after pressing Enter) — drop them only here, at render time.
+  const visible = (bullets || []).filter((b) => b.trim());
+  if (visible.length === 0) return null;
   return (
-    <ul className={className}>
-      {bullets.map((b, i) => (
-        <li key={i} className={/^\s/.test(b) ? 'sub' : ''}>{b.trim()}</li>
+    <ul className={[className, ordered ? 'ordered' : ''].filter(Boolean).join(' ')}>
+      {visible.map((b, i) => (
+        <li key={i} className={/^\s/.test(b) ? 'sub' : ''}>{renderFormatted(b.trim())}</li>
       ))}
     </ul>
   );
@@ -29,7 +33,7 @@ function ResumaticSection({ section }) {
                 <em>{x.role}</em>
                 <em>{x.location}</em>
               </div>
-              <Bullets bullets={x.bullets} className="r-bullets" />
+              <Bullets bullets={x.bullets} className="r-bullets" ordered={x.bulletStyle === 'numbered'} />
             </div>
           ))}
         </section>
@@ -48,7 +52,7 @@ function ResumaticSection({ section }) {
                 <em>{x.role}</em>
                 <em>{x.link}</em>
               </div>
-              <Bullets bullets={x.bullets} className="r-bullets" />
+              <Bullets bullets={x.bullets} className="r-bullets" ordered={x.bulletStyle === 'numbered'} />
             </div>
           ))}
         </section>
@@ -67,7 +71,7 @@ function ResumaticSection({ section }) {
                 <em>{x.degree}</em>
                 <em>{x.location}</em>
               </div>
-              <Bullets bullets={x.bullets} className="r-bullets" />
+              <Bullets bullets={x.bullets} className="r-bullets" ordered={x.bulletStyle === 'numbered'} />
             </div>
           ))}
         </section>
@@ -99,10 +103,10 @@ function ResumaticSection({ section }) {
       ) : null;
     }
     case 'custom':
-      return section.items.length > 0 ? (
+      return section.items.some((b) => b.trim()) ? (
         <section key={section.id}>
           <h3>{section.title}</h3>
-          <Bullets bullets={section.items} className="r-bullets" />
+          <Bullets bullets={section.items} className="r-bullets" ordered={section.bulletStyle === 'numbered'} />
         </section>
       ) : null;
     default:
@@ -124,7 +128,7 @@ function ResumaticPreview({ resume }) {
 
       {p.summary && (
         <section>
-          <p className="r-summary">{p.summary}</p>
+          <p className="r-summary">{renderFormatted(p.summary)}</p>
         </section>
       )}
 
@@ -148,7 +152,7 @@ function StandardSection({ section }) {
                 <span>{x.start} – {x.end}</span>
               </div>
               <div className="r-sub">{[x.company, x.location].filter(Boolean).join(' — ')}</div>
-              <Bullets bullets={x.bullets} />
+              <Bullets bullets={x.bullets} ordered={x.bulletStyle === 'numbered'} />
             </div>
           ))}
         </section>
@@ -164,7 +168,7 @@ function StandardSection({ section }) {
                 <span>{x.start} – {x.end}</span>
               </div>
               <div className="r-sub">{[x.role, x.link].filter(Boolean).join(' — ')}</div>
-              <Bullets bullets={x.bullets} />
+              <Bullets bullets={x.bullets} ordered={x.bulletStyle === 'numbered'} />
             </div>
           ))}
         </section>
@@ -180,7 +184,7 @@ function StandardSection({ section }) {
                 <span>{x.start} – {x.end}</span>
               </div>
               <div className="r-sub">{[x.school, x.location].filter(Boolean).join(' — ')}</div>
-              <Bullets bullets={x.bullets} />
+              <Bullets bullets={x.bullets} ordered={x.bulletStyle === 'numbered'} />
             </div>
           ))}
         </section>
@@ -212,10 +216,10 @@ function StandardSection({ section }) {
       ) : null;
     }
     case 'custom':
-      return section.items.length > 0 ? (
+      return section.items.some((b) => b.trim()) ? (
         <section key={section.id}>
           <h3>{section.title}</h3>
-          <Bullets bullets={section.items} />
+          <Bullets bullets={section.items} ordered={section.bulletStyle === 'numbered'} />
         </section>
       ) : null;
     default:
@@ -239,7 +243,7 @@ function StandardPreview({ resume, template }) {
       {p.summary && (
         <section>
           <h3>Summary</h3>
-          <p>{p.summary}</p>
+          <p>{renderFormatted(p.summary)}</p>
         </section>
       )}
 

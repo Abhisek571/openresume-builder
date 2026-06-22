@@ -13,6 +13,7 @@
 - [ ] Export to DOCX and plain text, not just PDF
 - [ ] Spell-check / grammar check on text fields
 - [ ] Undo/redo for edits (snapshots are a coarser-grained alternative)
+- [x] Basic rich text formatting in Summary/bullet fields — bold/italic markup, bulleted vs. numbered list toggle, Word/LibreOffice-style list editing (Tab/Shift+Tab to indent, Enter continues the list at the same level)
 
 ## AI Integration
 - [ ] Implement the AI integration feature (currently stubbed in `src/ai.js`)
