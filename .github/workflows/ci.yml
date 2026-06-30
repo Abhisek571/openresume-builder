@@ -23,17 +23,17 @@ jobs:
   e2e-windows:
     # The e2e smoke suite launches node_modules/electron/dist/electron.exe
     # directly (see e2e/smoke.mjs), so it only runs on Windows for now.
+    # Node 22+ is required here (unlike the other jobs/workflows) because
+    # electron@42's postinstall binary download/extract step silently
+    # produces no electron.exe under Node 20.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - run: npm ci
-
-      - name: DEBUG electron binary smoke check
-        run: '& .\node_modules\electron\dist\electron.exe --version'
 
       - run: npm run test:e2e
