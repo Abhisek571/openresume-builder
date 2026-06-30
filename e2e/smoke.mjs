@@ -10,6 +10,10 @@ import { _electron } from 'playwright-core';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
+// Importing 'electron' resolves (and lazily downloads, if missing) the
+// platform-correct binary path — this version of Electron has no
+// postinstall script, it only downloads on first require().
+import electronPath from 'electron';
 
 const results = [];
 function check(name, condition, detail) {
@@ -34,7 +38,7 @@ async function main() {
   }
 
   const app = await _electron.launch({
-    executablePath: path.resolve('node_modules/electron/dist/electron.exe'),
+    executablePath: electronPath,
     // --disable-gpu avoids a renderer/GPU-process crash on GitHub Actions'
     // Windows runners, which have no real GPU.
     args: ['--disable-gpu', path.resolve('.')],
