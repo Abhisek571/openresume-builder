@@ -18,7 +18,8 @@ body, html, #root { margin: 0; height: 100%; overflow-x: hidden; font-family: sy
   padding: 6px 10px; border: 0; border-radius: 6px;
   background: #374151; color: #fff; cursor: pointer; font-size: 13px;
 }
-.toolbar button:hover { background: #4b5563; }
+.toolbar button:hover:not(:disabled) { background: #4b5563; }
+.toolbar button:disabled { opacity: 0.35; cursor: default; }
 .toolbar .ai-btn { background: #7c3aed; }
 .toolbar .status { font-size: 12px; opacity: 0.8; min-width: 90px; }
 

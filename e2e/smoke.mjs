@@ -69,6 +69,24 @@ async function main() {
     const previewName = await page.$eval('.preview-pane h1', (el) => el.textContent);
     check('personal name edit reflects in live preview', previewName === 'E2E Test User', previewName);
 
+    // --- Undo/redo (Ctrl+Z / Ctrl+Y) ---
+    // Wait out the coalesce window (600ms) so the next edit is its own undo
+    // step rather than merging into the fill above.
+    await page.waitForTimeout(700);
+    await nameInput.fill('Undo Target');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Control+Z');
+    await page.waitForTimeout(200);
+    const nameAfterUndo = await page.$eval('.preview-pane h1', (el) => el.textContent);
+    check('Ctrl+Z reverts the last name edit', nameAfterUndo === 'E2E Test User', nameAfterUndo);
+    await page.keyboard.press('Control+Y');
+    await page.waitForTimeout(200);
+    const nameAfterRedo = await page.$eval('.preview-pane h1', (el) => el.textContent);
+    check('Ctrl+Y restores the undone edit', nameAfterRedo === 'Undo Target', nameAfterRedo);
+    await page.waitForTimeout(700);
+    await nameInput.fill('E2E Test User');
+    await page.waitForTimeout(200);
+
     // --- Experience: rich bold/italic, hidden markers ---
     await page.click('.nav-pane button.nav-item:has-text("Experience")');
     await page.waitForTimeout(300);
@@ -205,6 +223,19 @@ async function main() {
     await page.waitForTimeout(200);
     customLi = await page.$$eval('.preview-pane .resume-sheet > section:last-child li', (els) => els.length);
     check('two custom lines render as a real bulleted list', customLi === 2, `li count=${customLi}`);
+
+    // --- Undo inside a focused contenteditable ---
+    // RichBulletField keeps its DOM as the source of truth while focused, so
+    // the Ctrl+Z handler must blur it before rewinding or the visible text
+    // wouldn't change. Wait out the coalesce window first so the 'X' edit is
+    // its own undo step.
+    await page.waitForTimeout(700);
+    await page.keyboard.type('X');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Control+Z');
+    await page.waitForTimeout(200);
+    const customAfterUndo = await page.$eval('.editor .rich-bullet-field', (el) => el.textContent);
+    check('Ctrl+Z in a focused rich field reverts the edit on screen', customAfterUndo === 'Only pointSecond point', JSON.stringify(customAfterUndo));
 
     check('no uncaught page errors during the whole run', pageErrors.length === 0, pageErrors.join('; '));
   } finally {
