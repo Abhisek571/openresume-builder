@@ -2,7 +2,13 @@ name: CI
 
 on:
   push:
+    # Branch pushes only — on tag pushes the build workflows call this
+    # workflow themselves (workflow_call) to gate the release artifacts,
+    # so a standalone run would be redundant.
+    branches:
+      - "**"
   pull_request:
+  workflow_call:
 
 jobs:
   lint-and-test:

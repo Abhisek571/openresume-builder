@@ -10,7 +10,13 @@ permissions:
   contents: write
 
 jobs:
+  # Gate the release build on the full CI suite (lint + unit + e2e) so a
+  # broken tag never ships installers.
+  test:
+    uses: ./.github/workflows/ci.yml
+
   build-windows:
+    needs: test
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
