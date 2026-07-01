@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { emptyResume, normalizeResume } from './data.js';
+import useHistory from './useHistory.js';
 import SectionNav from './SectionNav.jsx';
 import Editor from './Editor.jsx';
 import Preview from './Preview.jsx';
@@ -30,7 +31,7 @@ function loadSnapshots() {
 }
 
 export default function App() {
-  const [resume, setResume] = useState(loadFromStorage);
+  const { value: resume, set: setResume, undo, redo, canUndo, canRedo } = useHistory(loadFromStorage);
   const [template, setTemplate] = useState('resumatic');
   const [status, setStatus] = useState('');
   const [activeSection, setActiveSection] = useState('personal');
@@ -80,6 +81,36 @@ export default function App() {
     window.api.onMenuOpen(load);
     window.api.onMenuSaveAs(saveAs);
   }, []);
+
+  // Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y (Cmd on macOS). preventDefault stops the
+  // browser's native input undo, which would fight the controlled state. A
+  // focused contenteditable is blurred first because RichBulletField treats
+  // its DOM as the source of truth while focused and only resyncs from the
+  // value prop once unfocused.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      const isUndo = key === 'z' && !e.shiftKey;
+      const isRedo = key === 'y' || (key === 'z' && e.shiftKey);
+      if (!isUndo && !isRedo) return;
+      e.preventDefault();
+      if (document.activeElement && document.activeElement.isContentEditable) {
+        document.activeElement.blur();
+      }
+      (isUndo ? undo : redo)();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [undo, redo]);
+
+  // Undo/redo can remove the section the editor pane is showing; fall back
+  // to Personal instead of leaving a dead "Section not found" pane.
+  useEffect(() => {
+    if (activeSection !== 'personal' && !resume.sections.some((s) => s.id === activeSection)) {
+      setActiveSection('personal');
+    }
+  }, [resume, activeSection]);
 
   const exportPDF = async () => {
     const res = await window.api.exportPDF();
@@ -199,6 +230,8 @@ export default function App() {
 
         <div className="toolbar-row">
           <div className="toolbar-group">
+            <button className="icon-btn" title="Undo (Ctrl+Z)" onClick={undo} disabled={!canUndo}>↶</button>
+            <button className="icon-btn" title="Redo (Ctrl+Y)" onClick={redo} disabled={!canRedo}>↷</button>
             <button onClick={makeSnapshot}>📸 Make Snapshot</button>
             <button onClick={() => { setShowSnapshots((v) => !v); setShowSettings(false); }}>
               Snapshot Restore ({snapshots.length})
