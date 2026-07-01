@@ -44,7 +44,7 @@ Ordered by priority for a solo, free, open-source workflow. Parked items
 - [x] Tests gate every push and every release — CI runs lint + unit + e2e on all branch pushes, and the three release build workflows call the CI suite (`workflow_call`) as a required job, so a broken tag never uploads installers
 - [x] Winget manifest submitted: https://github.com/microsoft/winget-pkgs/pull/391215
 
-## Parked (needs hardware or outsized effort)
+## Parked (no mac :( or too much effort)
 
 - [ ] AI integration (currently stubbed in `src/ai.js`): bullet rewriting, generated summary, ATS keyword matching against a pasted job description
 - [ ] Code-signing certificate — would fix the SmartScreen/MOTW issue below and remove "unidentified developer" warnings (SignPath Foundation application is the path if ever pursued)
