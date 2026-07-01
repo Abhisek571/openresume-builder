@@ -1,7 +1,7 @@
 # TODO / Roadmap
 
 Ordered by priority for a solo, free, open-source workflow. Parked items
-(need money, hardware, or a different scale of effort) live at the bottom.
+(need hardware or a different scale of effort) live at the bottom.
 
 ## Next up (in order)
 
@@ -38,10 +38,10 @@ Ordered by priority for a solo, free, open-source workflow. Parked items
 - [x] Automated tests — Vitest unit tests for pure logic (format/bulletStyles/data/textEditing/RichBulletField helpers) plus a Playwright e2e smoke suite (`e2e/smoke.mjs`) driving the real Electron app
 - [x] Winget manifest submitted: https://github.com/microsoft/winget-pkgs/pull/391215
 
-## Parked (needs money, hardware, or outsized effort)
+## Parked (needs hardware or outsized effort)
 
 - [ ] AI integration (currently stubbed in `src/ai.js`): bullet rewriting, generated summary, ATS keyword matching against a pasted job description
-- [ ] Code-signing certificate — would fix the SmartScreen/MOTW issue below and remove "unidentified developer" warnings, but costs money (SignPath Foundation application is the free path if ever pursued)
+- [ ] Code-signing certificate — would fix the SmartScreen/MOTW issue below and remove "unidentified developer" warnings (SignPath Foundation application is the path if ever pursued)
 - [ ] `winget install` from the local manifest fails on a generic internal error during winget's pre-install Mark-of-the-Web step (not our installer — verified working directly, `/S` exits 0 and registers correctly). Most likely zero SmartScreen reputation on an unsigned binary; revisit once the file has been out for a while, or once code-signed
 - [ ] Chocolatey — needs a chocolatey.org account + API key, stricter moderation than winget
 - [ ] Snap Store (command-line install on Linux, `snap install`)
