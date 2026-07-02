@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.2.6
+
+Stable release promoting the accumulated 2.2.x work (everything from 2.2.0-beta.1 through 2.2.5 below) to the stable channel. No app changes beyond 2.2.5 — this release stabilized the e2e smoke test on CI (the profile-switcher popover is now opened via a direct DOM click instead of a coordinate click, which could land on the overlapping centered tab group on the CI runner's small virtual display).
+
+## 2.2.5
+
+- Added **multiple resume profiles** — keep a master resume plus tailored copies per application, switched from a new 📄 toolbar dropdown. New / Duplicate ("Copy of …") / Rename / Delete; deleting a profile drops a final "insurance" snapshot of it under the profile you land on, so a mis-click is recoverable. Autosave, snapshots, and undo history are all per-profile, and switching profiles clears the undo stack (Ctrl+Z can't rewind into another document). Existing single-resume data migrates automatically (and verifiably — the legacy key is only removed after the copy is confirmed readable).
+- Added **export to Word (.docx) and plain text (.txt)** alongside PDF, from a new Export ▾ dropdown. Bold/italic map to real Word runs (not literal `**`), the bullet & numbering picker maps to real Word numbering definitions (not literal "•" characters), and Links become real clickable hyperlinks in the .docx. Plain text is the most ATS-safe format. All three formats are fed by one shared export model (`src/exportModel.js`) so they can't drift from the preview, and exports use a consistent `{Name} — Resume.ext` filename.
+- Added **dark mode** — a three-way System / Light / Dark appearance setting in the Settings popover. System follows the OS (and reacts live when the OS flips); the choice applies before first paint on launch, so there's no white flash. The resume preview intentionally stays paper-white in dark mode — it represents the printed page. Electron's own menus and dialogs follow the setting too.
+- Added **undo/redo** — Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z plus ↶/↷ toolbar buttons. Rapid edits within 600ms coalesce into a single undo step, so undo rewinds a typing burst rather than one keystroke at a time.
+- Added dedicated **Links** and **Languages** section types. Links show their label in the resume with the URL as a real clickable anchor in the preview/PDF (and a real hyperlink in Word); a missing `https://` is prepended automatically, with a non-blocking "doesn't look like a URL" hint for typos. Languages render compactly inline — `English (Native) · German (B2)` — instead of one card-height row each, with autocomplete for proficiency levels (Native/Fluent/… and CEFR A1–C2).
+- Release builds are now gated on the full test suite — lint, unit tests, and the Playwright e2e suite run on every push, and the Windows/macOS/Linux release workflows require them to pass before uploading installers, so a broken tag can't publish.
+- The e2e smoke test now drives a realistic resume persona instead of placeholder content.
+
+## 2.2.1-beta.1
+
+- Version numbers now display in a friendly `major.minor.patch` + "beta N" form in the Settings popover and update dialogs.
+
 ## 2.2.0-beta.1
 
 - Added a real WYSIWYG editor for the Experience description: bold/italic render for real, with no visible `**`/`*` markers while typing, instead of the old textarea showing raw markup. Also applied to the Custom Section field and to each Skill row. Under the hood it still stores the same marker-string format the preview already parsed, so no data migration was needed.
