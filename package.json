@@ -53,7 +53,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "AbhisekkumarShandilya",
+      "owner": "Abhisek571",
       "repo": "openresume-builder"
     },
     "win": {

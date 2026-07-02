@@ -36,15 +36,15 @@ A free, open-source, cross-platform resume builder built with **Electron + React
 |---|---|
 | ![Format toolbar](docs/screenshots/formatting.png) | ![Snapshots](docs/screenshots/snapshots.png) |
 
-More in the [wiki Screenshots page](https://github.com/AbhisekkumarShandilya/openresume-builder/wiki/Screenshots).
+More in the [wiki Screenshots page](https://github.com/Abhisek571/openresume-builder/wiki/Screenshots).
 
 ## Download
 
-Get the latest build from the [Releases page](https://github.com/AbhisekkumarShandilya/openresume-builder/releases/latest):
+Get the latest build from the [Releases page](https://github.com/Abhisek571/openresume-builder/releases/latest):
 
 - **Windows** — installer (`Setup.exe`) or portable (`.exe`)
 - **macOS** — `.dmg` for Apple Silicon or Intel (built via CI, currently untested on real Mac hardware)
-- **Linux** — `.AppImage` (built via CI, verified on a real Linux kernel via WSL2/WSLg) — see the [wiki's Linux install/run instructions](https://github.com/AbhisekkumarShandilya/openresume-builder/wiki/Installation#linux) for `chmod +x`, FUSE troubleshooting, and desktop integration
+- **Linux** — `.AppImage` (built via CI, verified on a real Linux kernel via WSL2/WSLg) — see the [wiki's Linux install/run instructions](https://github.com/Abhisek571/openresume-builder/wiki/Installation#linux) for `chmod +x`, FUSE troubleshooting, and desktop integration
 
 These are unsigned builds, so Windows SmartScreen / macOS Gatekeeper will warn about an unidentified developer the first time you run one.
 
