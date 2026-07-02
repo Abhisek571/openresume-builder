@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    # Branch pushes only — on tag pushes the build workflows call this
+    # workflow themselves (workflow_call) to gate the release artifacts,
+    # so a standalone run would be redundant.
+    branches:
+      - "**"
+  pull_request:
+  workflow_call:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm test
+
+  e2e-windows:
+    # The e2e smoke suite drives the real Electron app, so it only runs on
+    # Windows for now (see ELECTRON_RUN_AS_NODE handling in smoke.mjs).
+    # Node 22+ is required here (unlike the other jobs/workflows) because
+    # electron@42's dependency @electron-internal/extract-zip needs it to
+    # download the Electron binary on first require('electron').
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npm run test:e2e

@@ -1,6 +1,45 @@
-import React from 'react';
 import { renderFormatted, splitIntroAndBullets } from './format.jsx';
 import { normalizeBulletStyle } from './bulletStyles.js';
+import { languagesInline, visibleLinks, INLINE_SEP } from './contactFields.js';
+
+// Languages render as one compact inline line (English (Native) · German (B2))
+// rather than a card-height row per language.
+function LanguagesLine({ items }) {
+  const inline = languagesInline(items);
+  return inline ? <p className="r-languages">{inline}</p> : null;
+}
+
+// Links show the label but the URL is a real clickable anchor (carried into the
+// PDF by Chromium's print-to-PDF). Separated by the same middot as languages.
+function LinksLine({ items }) {
+  const links = visibleLinks(items);
+  if (!links.length) return null;
+  return (
+    <p className="r-links">
+      {links.map((l, i) => (
+        <span key={i}>
+          {i > 0 && INLINE_SEP}
+          <a href={l.href} target="_blank" rel="noreferrer">{l.text}</a>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+// Each non-blank skill is its own stacked line (not a chip/pill) — typically
+// a "Label: comma, separated, items" category, with B/I markup honored so a
+// leading "**Label:**" renders genuinely bold.
+function SkillLines({ items }) {
+  const skills = items.filter((s) => s.trim());
+  if (skills.length === 0) return null;
+  return (
+    <div className="r-skills">
+      {skills.map((s, i) => (
+        <p className="r-skill-line" key={i}>{renderFormatted(s.trim())}</p>
+      ))}
+    </div>
+  );
+}
 
 function Bullets({ bullets, className, style }) {
   // A field can hold an intro line (rendered as a plain paragraph) before
@@ -78,7 +117,7 @@ function ResumaticSection({ section }) {
             <div className="r-entry" key={x.id}>
               <div className="r-entry-head">
                 <strong>{x.school}</strong>
-                <span>{x.end}</span>
+                <span>{x.start} – {x.end}</span>
               </div>
               <div className="r-entry-sub">
                 <em>{x.degree}</em>
@@ -106,15 +145,27 @@ function ResumaticSection({ section }) {
           ))}
         </section>
       );
-    case 'skills': {
-      const skills = section.items.filter(Boolean);
-      return skills.length > 0 ? (
+    case 'languages':
+      return languagesInline(section.items) ? (
         <section key={section.id}>
           <h3>{section.title}</h3>
-          <p className="r-skills-text">{skills.join('; ')}</p>
+          <LanguagesLine items={section.items} />
         </section>
       ) : null;
-    }
+    case 'links':
+      return visibleLinks(section.items).length ? (
+        <section key={section.id}>
+          <h3>{section.title}</h3>
+          <LinksLine items={section.items} />
+        </section>
+      ) : null;
+    case 'skills':
+      return section.items.some((b) => b.trim()) ? (
+        <section key={section.id}>
+          <h3>{section.title}</h3>
+          <SkillLines items={section.items} />
+        </section>
+      ) : null;
     case 'custom':
       return section.items.some((b) => b.trim()) ? (
         <section key={section.id}>
@@ -217,17 +268,27 @@ function StandardSection({ section }) {
           ))}
         </section>
       );
-    case 'skills': {
-      const skills = section.items.filter(Boolean);
-      return skills.length > 0 ? (
+    case 'languages':
+      return languagesInline(section.items) ? (
         <section key={section.id}>
           <h3>{section.title}</h3>
-          <div className="r-skills">
-            {skills.map((sk, i) => <span className="r-chip" key={i}>{sk}</span>)}
-          </div>
+          <LanguagesLine items={section.items} />
         </section>
       ) : null;
-    }
+    case 'links':
+      return visibleLinks(section.items).length ? (
+        <section key={section.id}>
+          <h3>{section.title}</h3>
+          <LinksLine items={section.items} />
+        </section>
+      ) : null;
+    case 'skills':
+      return section.items.some((b) => b.trim()) ? (
+        <section key={section.id}>
+          <h3>{section.title}</h3>
+          <SkillLines items={section.items} />
+        </section>
+      ) : null;
     case 'custom':
       return section.items.some((b) => b.trim()) ? (
         <section key={section.id}>

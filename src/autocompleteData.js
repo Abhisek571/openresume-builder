@@ -2,15 +2,6 @@
 // free-text fields. These are just hints — fields stay plain text inputs, so
 // typing anything not on the list works fine.
 
-export const SKILL_SUGGESTIONS = [
-  'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C#', 'Go', 'Rust', 'SQL', 'React',
-  'Vue', 'Angular', 'Node.js', 'Express', 'Django', 'Flask', 'Spring Boot', '.NET', 'AWS', 'Azure',
-  'Google Cloud', 'Docker', 'Kubernetes', 'CI/CD', 'Git', 'GraphQL', 'REST APIs', 'HTML', 'CSS',
-  'Tailwind CSS', 'Redux', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Linux', 'Bash', 'Agile',
-  'Scrum', 'Project Management', 'Communication', 'Leadership', 'Problem Solving', 'Data Analysis',
-  'Machine Learning', 'TensorFlow', 'PyTorch', 'Excel', 'Figma', 'Adobe Photoshop',
-];
-
 export const JOB_TITLE_SUGGESTIONS = [
   'Software Engineer', 'Senior Software Engineer', 'Staff Engineer', 'Frontend Developer',
   'Backend Developer', 'Full Stack Developer', 'DevOps Engineer', 'Site Reliability Engineer',
@@ -18,6 +9,13 @@ export const JOB_TITLE_SUGGESTIONS = [
   'Project Manager', 'Engineering Manager', 'QA Engineer', 'UX Designer', 'UI Designer',
   'Technical Lead', 'Solutions Architect', 'Systems Administrator', 'Business Analyst',
   'Marketing Manager', 'Sales Manager', 'Account Manager', 'Customer Success Manager', 'Intern',
+];
+
+// Language proficiency: the common word scale plus the CEFR levels that
+// European applications expect. Free-text, so anything else works too.
+export const PROFICIENCY_SUGGESTIONS = [
+  'Native', 'Fluent', 'Professional', 'Conversational', 'Basic',
+  'C2', 'C1', 'B2', 'B1', 'A2', 'A1',
 ];
 
 export const DEGREE_SUGGESTIONS = [
