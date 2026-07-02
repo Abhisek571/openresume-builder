@@ -285,9 +285,11 @@ async function main() {
     const profileCountBefore = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('resume-builder:profiles')).profiles.length
     );
-    // force: the decorative centered .tabs-group can overlap this trigger at
-    // some window sizes; we're testing the profile flow, not hit-testing.
-    await page.click('.profile-switch-btn', { force: true });
+    // The decorative centered .tabs-group can overlap this trigger at some
+    // window sizes, so a coordinate click can land on the Template tab
+    // instead. Dispatch the element's own click() to fire the onClick
+    // directly — we're testing the profile flow, not coordinate hit-testing.
+    await page.$eval('.profile-switch-btn', (el) => el.click());
     await page.waitForTimeout(150);
     await page.click('.profile-actions button:has-text("Duplicate")');
     await page.waitForTimeout(400);
@@ -299,7 +301,7 @@ async function main() {
     check('switcher shows the "Copy of" profile after duplicate', dupBtn.includes('Copy of'), dupBtn.trim());
 
     // Switching profiles clears the undo stack (fresh session per document).
-    await page.click('.profile-switch-btn', { force: true });
+    await page.$eval('.profile-switch-btn', (el) => el.click());
     await page.waitForTimeout(150);
     await page.click('.profile-item:not(.active)');
     await page.waitForTimeout(400);
@@ -310,14 +312,14 @@ async function main() {
     // on the active profile).
     const activeIsCopy = await page.$eval('.profile-switch-btn', (el) => el.textContent);
     if (!activeIsCopy.includes('Copy of')) {
-      await page.click('.profile-switch-btn', { force: true });
+      await page.$eval('.profile-switch-btn', (el) => el.click());
       await page.waitForTimeout(150);
       await page.click('.profile-item:has-text("Copy of")');
       await page.waitForTimeout(400);
     }
     // Delete the copy (accept the confirm dialog) → count restored.
     page.once('dialog', (d) => d.accept());
-    await page.click('.profile-switch-btn', { force: true });
+    await page.$eval('.profile-switch-btn', (el) => el.click());
     await page.waitForTimeout(150);
     await page.click('.profile-actions button.danger:has-text("Delete")');
     await page.waitForTimeout(400);
