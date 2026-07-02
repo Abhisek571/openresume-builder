@@ -1,6 +1,6 @@
 {
   "name": "openresume-builder",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "description": "OpenResume Builder — open-source cross-platform resume builder",
   "main": "electron/main.cjs",
   "type": "module",
