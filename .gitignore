@@ -5,3 +5,9 @@ release/
 *.log
 .env
 .claude/
+
+# Local planning / scratch docs (not for the public repo)
+ROADMAP-expanded.md
+SESSION-HANDOFF.md
+UI-redesign-plan.md
+plan pic/
