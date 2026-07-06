@@ -52,6 +52,12 @@ These are unsigned builds, so Windows SmartScreen / macOS Gatekeeper will warn a
 
 See [TODO.md](TODO.md) for planned work (page-break handling in PDF export, JSON Resume import/export, backup/restore, AI integration).
 
+## Branches & versions
+
+- **`master`** — latest stable release (currently **v2.2.6**); what the Releases page ships.
+- **`beta-3`** — active development branch for the next major version (**v3**).
+- **`beta`** — _retired._ It was the 2.x prerelease channel through v2.2.x and is no longer used for new work; `beta-3` supersedes it.
+
 ## Contributing / running from source
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for setup, running in dev mode, testing, and building installers yourself.
