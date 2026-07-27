@@ -39,7 +39,7 @@
     "react-dom": "^18.3.1"
   },
   "overrides": {
-    "tar": "^7.5.16"
+    "tar": "^7.5.22"
   },
   "build": {
     "appId": "com.abhisekkumarshandilya.openresumebuilder",
