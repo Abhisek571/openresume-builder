@@ -7,11 +7,15 @@ import Preview from './Preview.jsx';
 import TemplateGallery from './TemplateGallery.jsx';
 import { improveWithAI } from './ai.js';
 import { serializeText } from './textExport.js';
-import { docxBase64 } from './docxExport.js';
+import { docxBlob } from './docxExport.js';
 import { exportFilename } from './exportModel.js';
 import { version as appVersion } from '../package.json';
+import { downloadBlob, downloadResumeJson, downloadText } from './browser/downloads.js';
+import { RESUME_FILE_ACCEPT, readResumeFile } from './browser/resumeFiles.js';
+import { printResume } from './browser/printing.js';
+import { applyThemeSetting } from './browser/systemTheme.js';
 import { formatVersion } from './version.js';
-import { readThemeSetting, writeThemeSetting, resolveTheme, THEME_SETTINGS } from './theme.js';
+import { readThemeSetting, writeThemeSetting, THEME_SETTINGS } from './theme.js';
 import {
   bootstrap,
   newProfileId,
@@ -58,9 +62,8 @@ export default function App() {
   const [showSnapshots, setShowSnapshots] = useState(false);
   const [showProfiles, setShowProfiles] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [updateChecking, setUpdateChecking] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState('');
   const isFirstRender = useRef(true);
+  const fileInputRef = useRef(null);
   // Set right before a profile switch so the autosave effect (which fires
   // because both `resume` and `activeId` change) doesn't count the load as an
   // edit and bump the just-loaded profile's updatedAt.
@@ -104,41 +107,34 @@ export default function App() {
     if (activeIdRef.current) writeBody(localStorage, activeIdRef.current, resumeRef.current);
   };
 
-  const load = async () => {
-    const res = await window.api.loadResume();
-    if (res.ok) {
-      setResume(normalizeResume(res.data));
+  const importResume = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const imported = await readResumeFile(file);
+      setResume(imported);
       setActiveSection('personal');
-      setStatus('Loaded.');
+      setStatus('Imported resume JSON.');
+    } catch (error) {
+      setStatus(`Import failed: ${error.message}`);
     }
   };
 
-  const saveAs = async () => {
-    const res = await window.api.saveResume(resumeRef.current);
-    setStatus(res.ok ? 'Saved.' : 'Save cancelled.');
+  const exportJSON = () => {
+    setShowExport(false);
+    try {
+      downloadResumeJson(resumeRef.current, exportFilename(resumeRef.current, 'json'));
+      setStatus('Downloaded resume JSON.');
+    } catch (error) {
+      setStatus(`JSON export failed: ${error.message}`);
+    }
   };
 
-  // File > Open / Save As live in the native menu bar; they ping us here to
-  // run the same dialog flow the old toolbar buttons used.
+  // Apply and follow the browser/OS theme. The resume's paper tokens remain
+  // independent, so app appearance never changes printed output.
   useEffect(() => {
-    window.api.onMenuOpen(load);
-    window.api.onMenuSaveAs(saveAs);
-  }, []);
-
-  // Apply the theme: set data-theme on <html> (drives the CSS variables) and
-  // push the raw setting to the main process so Electron's own chrome
-  // (menus/dialogs/native scrollbars) follows via nativeTheme.themeSource,
-  // which accepts exactly 'system' | 'light' | 'dark'. In System mode we also
-  // re-apply when the OS flips prefers-color-scheme.
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => {
-      document.documentElement.setAttribute('data-theme', resolveTheme(themeSetting, mql.matches));
-    };
-    apply();
-    window.api.setTheme?.(themeSetting);
-    mql.addEventListener('change', apply);
-    return () => mql.removeEventListener('change', apply);
+    return applyThemeSetting(themeSetting);
   }, [themeSetting]);
 
   const changeTheme = (setting) => setThemeSetting(writeThemeSetting(localStorage, setting));
@@ -173,29 +169,35 @@ export default function App() {
     }
   }, [resume, activeSection]);
 
-  const exportPDF = async () => {
+  const exportPDF = () => {
     setShowExport(false);
-    const res = await window.api.exportPDF(exportFilename(resumeRef.current, 'pdf'));
-    setStatus(res.ok ? 'Exported PDF.' : 'Export cancelled.');
+    try {
+      printResume();
+      setStatus('Print dialog opened. Choose Save as PDF to export.');
+    } catch (error) {
+      setStatus(`Printing failed: ${error.message}`);
+    }
   };
 
   const exportDOCX = async () => {
     setShowExport(false);
     try {
-      const base64 = await docxBase64(resumeRef.current);
-      const res = await window.api.exportDocx(base64, exportFilename(resumeRef.current, 'docx'));
-      setStatus(res.ok ? 'Exported DOCX.' : 'Export cancelled.');
+      const blob = await docxBlob(resumeRef.current);
+      downloadBlob(blob, exportFilename(resumeRef.current, 'docx'));
+      setStatus('Downloaded DOCX.');
     } catch (err) {
-      console.error('DOCX export failed:', err);
-      setStatus('DOCX export failed.');
+      setStatus(`DOCX export failed: ${err.message}`);
     }
   };
 
-  const exportTXT = async () => {
+  const exportTXT = () => {
     setShowExport(false);
-    const text = serializeText(resumeRef.current);
-    const res = await window.api.exportText(text, exportFilename(resumeRef.current, 'txt'));
-    setStatus(res.ok ? 'Exported text.' : 'Export cancelled.');
+    try {
+      downloadText(serializeText(resumeRef.current), exportFilename(resumeRef.current, 'txt'));
+      setStatus('Downloaded plain text.');
+    } catch (error) {
+      setStatus(`Text export failed: ${error.message}`);
+    }
   };
 
   // AI stub — wired up but does nothing until you fill in ai.js later.
@@ -354,24 +356,15 @@ export default function App() {
     setShowSettings(false);
   };
 
-  const checkForUpdates = async () => {
-    setUpdateChecking(true);
-    setUpdateMessage('');
-    const res = await window.api.checkForUpdates();
-    setUpdateChecking(false);
-    if (!res.ok && res.reason === 'dev-mode') {
-      setUpdateMessage('Update checks are disabled in development.');
-    } else if (!res.ok) {
-      setUpdateMessage(`Update check failed: ${res.message || 'unknown error'}`);
-    } else if (res.hasUpdate) {
-      setUpdateMessage(`Update available: v${res.latest} (you have v${res.version}).`);
-    } else {
-      setUpdateMessage(`You're on the latest version (v${res.version}).`);
-    }
-  };
-
   return (
     <div className="app">
+      <input
+        ref={fileInputRef}
+        className="resume-file-input"
+        type="file"
+        accept={RESUME_FILE_ACCEPT}
+        onChange={importResume}
+      />
       <header className="toolbar">
         <div className="toolbar-row toolbar-row-tabs">
           <div className="toolbar-group">
@@ -399,10 +392,6 @@ export default function App() {
                   ))}
                 </div>
                 <p className="popover-hint">OpenResume Builder v{formatVersion(appVersion)}</p>
-                <button className="popover-action" disabled={updateChecking} onClick={checkForUpdates}>
-                  {updateChecking ? 'Checking…' : 'Check for Updates'}
-                </button>
-                {updateMessage && <p className="popover-hint">{updateMessage}</p>}
                 <button className="popover-action danger" onClick={resetResume}>Reset resume to blank</button>
               </div>
             )}
@@ -477,7 +466,8 @@ export default function App() {
                     <strong>Export resume</strong>
                     <button className="popover-close" onClick={() => setShowExport(false)}>×</button>
                   </div>
-                  <button className="popover-action" onClick={exportPDF}>PDF (.pdf)</button>
+                  <button className="popover-action" onClick={exportJSON}>JSON (.json)</button>
+                  <button className="popover-action" onClick={exportPDF}>Print / PDF</button>
                   <button className="popover-action" onClick={exportDOCX}>Word (.docx)</button>
                   <button className="popover-action" onClick={exportTXT}>Plain text (.txt)</button>
                   <p className="popover-hint">Plain text is the most ATS-safe format.</p>
@@ -495,6 +485,7 @@ export default function App() {
             <button onClick={() => { setShowSnapshots((v) => !v); setShowSettings(false); }}>
               Snapshot Restore ({snapshots.length})
             </button>
+            <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
             {showSnapshots && (
               <div className="popover snapshots-popover">
                 <div className="popover-header">
@@ -587,6 +578,9 @@ export default function App() {
           </section>
         )}
       </main>
+      <section className="print-resume" aria-hidden="true">
+        <Preview resume={resume} template={template} />
+      </section>
     </div>
   );
 }

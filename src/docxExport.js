@@ -152,8 +152,13 @@ export function buildResumeDoc(resume) {
   });
 }
 
-// Base64 works in both the renderer (Chromium) and Node (tests) without
-// needing Blob or Buffer at the call site; main decodes it to bytes on write.
+// Browser downloads use a Blob directly, avoiding the memory and conversion
+// overhead of the old Electron base64 IPC path. Keep the base64 helper for
+// compatibility with the existing document-structure tests.
+export function docxBlob(resume) {
+  return Packer.toBlob(buildResumeDoc(resume));
+}
+
 export function docxBase64(resume) {
   return Packer.toBase64String(buildResumeDoc(resume));
 }

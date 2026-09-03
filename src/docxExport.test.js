@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildResumeDoc, docxBase64 } from './docxExport.js';
+import { buildResumeDoc, docxBase64, docxBlob } from './docxExport.js';
 import { emptyResume } from './data.js';
 
 const rich = {
@@ -47,5 +47,14 @@ describe('docxBase64', () => {
     // Every .docx is a ZIP archive, whose local file header magic is "PK\x03\x04".
     expect(bytes[0]).toBe(0x50); // P
     expect(bytes[1]).toBe(0x4b); // K
+  });
+});
+
+describe('docxBlob', () => {
+  it('packs a browser-downloadable DOCX blob', async () => {
+    const blob = await docxBlob(rich);
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.size).toBeGreaterThan(100);
+    expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   });
 });

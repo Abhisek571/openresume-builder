@@ -6,16 +6,14 @@
 //
 // IMPORTANT: never call the Anthropic API directly from this
 // renderer file with your API key — the key would be exposed.
-// Instead, do the actual fetch in electron/main.js (the main
-// process) and call it through an IPC bridge, the same way
-// save/load/export already work in preload.cjs.
+// Instead, do the actual fetch in a server-only service and call it through
+// the focused HTTP API client. Provider credentials must never enter Vite
+// environment variables or the browser bundle.
 //
 // Rough plan when you build it:
-//   1. In preload.cjs, expose:  improveText: (payload) => ipcRenderer.invoke('ai-improve', payload)
-//   2. In electron/main.js, add an ipcMain.handle('ai-improve', ...)
-//      that fetches https://api.anthropic.com/v1/messages with
-//      your key from an env var, and returns improved text.
-//   3. Replace the body of this function to call window.api.improveText(...).
+//   1. Add a validated server endpoint and provider service.
+//   2. Keep the provider key in the server process environment.
+//   3. Add the request to src/api/client.js and call it here.
 //
 // Example of the eventual main-process call (for reference only):
 //   fetch('https://api.anthropic.com/v1/messages', {
@@ -33,7 +31,6 @@
 //   })
 // ============================================================
 
-export async function improveWithAI(resume) {
-  console.log('AI stub called. Not configured yet.', resume);
+export async function improveWithAI(_resume) {
   return null;
 }

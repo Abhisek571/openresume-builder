@@ -2,84 +2,80 @@
 
 ## Prerequisites
 
-Install **Node.js** (LTS, v18 or newer) from https://nodejs.org. This gives you `node` and `npm`.
-
-Check it's installed:
+Install Node.js 20.19 or newer (use an active LTS release). This project uses npm and the committed `package-lock.json`.
 
 ```bash
 node -v
 npm -v
-```
-
-On Windows, also have **Git** (optional, for version control) and a code editor like **VS Code**.
-
-## Setup
-
-```bash
 npm install
 ```
 
-## Run in development (hot reload)
+## Browser development
 
 ```bash
 npm run dev
 ```
 
-This starts Vite and opens the Electron app pointing at it. Edits to React files refresh live.
+Vite serves the browser app at the stable development origin `http://127.0.0.1:5173`. The React editor keeps resume profiles, snapshots, and theme settings in browser `localStorage`; changing the host or port uses a different storage origin.
 
-## Run the production build locally
-
-```bash
-npm start
-```
-
-## Package installers (.exe / .dmg / AppImage)
+## Production build and server
 
 ```bash
-npm run dist
+npm run build
+npm run server
 ```
 
-Output lands in the `release/` folder. On Windows you'll get an NSIS installer and a portable `.exe`. macOS `.dmg` builds can't be cross-compiled from Windows/Linux — see `.github/workflows/build-mac.yml`, which builds it on a GitHub Actions macOS runner instead.
+The built-in Node server serves `dist/` at `http://127.0.0.1:4173`, falls back to `index.html` for browser routes, and exposes:
 
-## Releasing a new version (for auto-update to work)
+- `GET /api/health`
+- `GET /api/version`
 
-The app checks GitHub Releases on startup via `electron-updater`. For that to detect a new version, every release must include the `.yml` metadata file alongside the installer, not just the installer itself:
+`npm start` builds and starts the same production server in one command. Set `HOST` or `PORT` to override the listener when self-hosting; use a stable origin if users need existing browser-local data to remain reachable.
 
-- Windows: upload `release/latest.yml` together with the `Setup.exe`
-- macOS: upload `release/latest-mac.yml` together with the `.dmg` (the mac workflow does this automatically)
+The server does not receive or store resume content. Editing, profiles, snapshots, imports, and exports remain local to the browser.
 
-If you bump the version and only upload the installer without its `.yml`, existing installs won't see the update.
+## Checks
 
-## Versioning
+```bash
+npm run lint
+npm test
+npm run build
+npm run test:e2e
+```
 
-`MAJOR.MINOR.PATCH`, trailing zero segments dropped in anything user-facing:
+The browser smoke suite uses `playwright-core` with an installed Chrome, Edge, or Chromium browser. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when automatic discovery cannot find one. Set `BROWSER_E2E_URL` to test an already-running deployment instead of the default Vite origin.
 
-- **Major** release: `1.0`, `2.0`, `3.0`, ...
-- **Significant update**: `1.1`, `1.2`, ...
-- **Bug-fix only**: third segment, e.g. `1.0.1`, `1.0.2`, ... `1.0.156`.
-- **Beta**: always the literal word "beta" plus a number, naming the release it's leading up to — `2.2 beta 1`, `2.2 beta 2`, ... so a beta is never confused with a maintenance/patch release that happens to share a number.
+## Browser file and PDF behavior
 
-`package.json`'s `version` field still has to be strict semver for npm/electron-builder/electron-updater (3 numeric segments, optional `-beta.N` suffix) — e.g. `2.2.0`, `2.2.0-beta.1`, `1.0.1`. `formatVersion()` in `src/version.js` converts that internal string to the friendly display form above; it's what the in-app Settings popover and GitHub release titles use. Git tags and `package.json` stay semver as-is — only what's *shown to users* (Settings, release titles) follows the friendly format.
+- Import JSON uses the visible `Import JSON` button and validates before replacing the active resume.
+- JSON, TXT, and DOCX exports download directly in the browser.
+- `Print / PDF` opens the browser print dialog; choose the browser's Save as PDF destination.
+- System/Light/Dark follows browser media preferences and keeps the resume sheet paper-white.
 
 ## Project structure
 
-```
-electron/
-  main.cjs      Electron main process — window, file save/load, PDF export
-  preload.cjs   Safe bridge between UI and file system
+```text
+server/
+  app.js                 Static server and health/version handlers
+  index.js               Production entry point
 src/
-  main.jsx      React entry
-  App.jsx       Layout, toolbar, state
-  Editor.jsx    Left-side form
-  Preview.jsx   Right-side live resume render (2 templates)
-  data.js       The resume JSON model
-  ai.js         AI stub — fill in later
-  styles.css    All styling + print rules
+  api/client.js          Focused same-origin API client
+  browser/               File, download, print, and system-theme adapters
+  App.jsx                Layout, toolbar, profiles, snapshots, and browser flows
+  Editor.jsx             Section-based resume editor
+  Preview.jsx            Paper-white resume preview and templates
+  profiles.js            Browser-local profile/snapshot persistence
+  exportModel.js         Shared semantic export model
+e2e/
+  browser-smoke.mjs      Real-browser parity and responsive smoke suite
 ```
 
-## Adding AI later
+## Versioning
 
-See the comments in `src/ai.js`. The key rule: do the actual API call in
-`electron/main.cjs` (the main process) so your API key is never exposed in the
-UI. Expose it through `preload.cjs` the same way save/load/export work, then
-call it from `ai.js`.
+`package.json` uses strict semver. Use `formatVersion()` from `src/version.js` for user-facing versions; do not hand-format version strings in components.
+
+Beta 3 replaces the Electron runtime rather than redesigning the product. Keep the current resume schema, rich-text markers, storage keys, templates, and semantic export behavior stable.
+
+## Adding server-backed features later
+
+API credentials must stay on the server and must never be exposed through Vite environment variables or client bundles. Add server endpoints only when a feature requires them; resume editing and persistence should not move server-side by default.

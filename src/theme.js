@@ -6,8 +6,8 @@
 // pin the theme regardless of the OS.
 //
 // Kept as a pure module (no React, no direct DOM/window access) so it's cheap
-// to unit-test — App.jsx owns the wiring (matchMedia listener, applying the
-// data-theme attribute, and pushing the setting to nativeTheme over IPC).
+// to unit-test. The browser system-theme adapter owns matchMedia and applies
+// the resolved value to the document root.
 
 export const THEME_KEY = 'resume-builder:theme';
 export const THEME_SETTINGS = ['system', 'light', 'dark'];

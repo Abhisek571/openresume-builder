@@ -1,27 +1,25 @@
 {
   "name": "openresume-builder",
   "version": "2.2.6",
-  "description": "OpenResume Builder — open-source cross-platform resume builder",
-  "main": "electron/main.cjs",
+  "description": "OpenResume Builder — open-source browser-first resume builder",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
+  },
   "scripts": {
-    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env NODE_ENV=development node scripts/launch-electron.cjs\"",
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "vite build",
-    "start": "npm run build && node scripts/launch-electron.cjs",
-    "dist": "vite build && electron-builder",
+    "server": "node server/index.js",
+    "start": "npm run build && node server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node e2e/smoke.mjs",
+    "test:e2e": "node e2e/browser-smoke.mjs",
     "lint": "eslint ."
   },
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitejs/plugin-react": "^4.3.1",
-    "concurrently": "^9.0.1",
-    "cross-env": "^7.0.3",
-    "electron": "^42.4.1",
-    "electron-builder": "^24.13.3",
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
@@ -29,64 +27,14 @@
     "jsdom": "^29.1.1",
     "playwright-core": "^1.61.1",
     "vite": "^6.4.3",
-    "vitest": "^4.1.9",
-    "wait-on": "^8.0.1"
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "docx": "^9.7.1",
-    "electron-updater": "^6.8.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "overrides": {
     "tar": "^7.5.16"
-  },
-  "build": {
-    "appId": "com.abhisekkumarshandilya.openresumebuilder",
-    "productName": "OpenResume Builder",
-    "files": [
-      "dist/**/*",
-      "electron/**/*"
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "Abhisek571",
-      "repo": "openresume-builder"
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "nsis": {
-      "artifactName": "OpenResume-Builder-Setup-${version}.${ext}"
-    },
-    "portable": {
-      "artifactName": "OpenResume-Builder-Portable-${version}.${ext}"
-    },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ]
-    },
-    "dmg": {
-      "artifactName": "OpenResume-Builder-${version}-${arch}.${ext}"
-    },
-    "linux": {
-      "target": "AppImage"
-    },
-    "appImage": {
-      "artifactName": "OpenResume-Builder-${version}.${ext}"
-    }
   }
 }

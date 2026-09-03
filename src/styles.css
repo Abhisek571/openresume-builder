@@ -121,7 +121,7 @@ body, html, #root { margin: 0; height: 100%; overflow-x: hidden; font-family: sy
 /* Themed base so there's no white gap behind the app before/around the panes. */
 html { background: var(--editor-bg); }
 
-/* Themed scrollbars (Chromium/Electron) */
+/* Themed scrollbars (Chromium/WebKit) */
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-track { background: var(--scroll-track); }
 ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
@@ -470,11 +470,66 @@ html { background: var(--editor-bg); }
 .resume-sheet ul.r-list.style-lower-roman li:not(.sub)::before { content: counter(r-list-count, lower-roman) '.'; }
 .resume-sheet ul.r-list.style-upper-roman li:not(.sub)::before { content: counter(r-list-count, upper-roman) '.'; }
 
+.resume-file-input { display: none; }
+.print-resume { display: none; }
+
+/* Browser layouts retain the desktop workbench while allowing the toolbar and
+   panes to reflow once there is no Electron-enforced minimum window size. */
+@media screen and (max-width: 1199px) {
+  .toolbar-row-tabs { flex-wrap: wrap; }
+  .toolbar-row-tabs .tabs-group {
+    position: static; transform: none; margin-left: auto;
+  }
+  .editor-pane { width: 42%; }
+  .preview-pane, .final-preview-pane { overflow-x: auto; justify-content: flex-start; }
+}
+
+@media screen and (max-width: 767px) {
+  .app { height: auto; min-height: 100vh; }
+  .toolbar-row { flex-wrap: wrap; padding: 8px; }
+  .toolbar-row-tabs .tabs-group {
+    width: 100%; margin: 0; justify-content: space-between;
+  }
+  .tabs { min-width: 0; overflow-x: auto; }
+  .tabs button { white-space: nowrap; }
+  .profile-switch-btn {
+    max-width: calc(100vw - 64px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .popover { position: fixed; top: 56px; left: 8px; right: 8px; width: auto; max-height: calc(100vh - 72px); overflow-y: auto; }
+  .workspace { flex-direction: column; overflow: visible; }
+  .nav-pane {
+    width: auto; flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 8px;
+  }
+  .nav-pane .nav-item { white-space: nowrap; }
+  .nav-pane .nav-arrows { display: none; }
+  .nav-pane .nav-add { margin: 0 0 0 4px; min-width: 120px; }
+  .editor-pane { box-sizing: border-box; width: 100%; max-height: none; overflow: visible; padding: 12px; }
+  .preview-pane, .final-preview-pane { box-sizing: border-box; width: 100%; padding: 12px; }
+  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet {
+    zoom: 90%;
+  }
+  .status { flex: 1; min-width: 140px; }
+}
+
+@media screen and (max-width: 620px) {
+  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet { zoom: 70%; }
+}
+
+@media screen and (max-width: 480px) {
+  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet { zoom: 54%; }
+}
+
+@media screen and (max-width: 360px) {
+  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet { zoom: 40%; }
+}
+
 /* Print / PDF: only the sheet shows, full bleed. Force light regardless of
    the app theme — the export is always a paper-white page. */
 @media print {
+  @page { size: A4; margin: 0; }
   :root { color-scheme: light; }
-  .toolbar, .editor-pane { display: none !important; }
-  .preview-pane { padding: 0; background: #fff; }
-  .resume-sheet { box-shadow: none; width: 100%; min-height: auto; }
+  html, body, #root, .app { height: auto; overflow: visible; background: #fff; }
+  .toolbar, .workspace { display: none !important; }
+  .print-resume { display: block; }
+  .print-resume .resume-sheet { box-shadow: none; width: 100%; min-height: auto; zoom: 1; }
 }

@@ -1,13 +1,13 @@
 # OpenResume Builder
 
-A free, open-source, cross-platform resume builder built with **Electron + React + Vite**.
+OpenResume Builder Beta 3 is the browser-first release: a free, open-source resume builder built with **React + Vite** and served by a minimal Node server.
 
 ![OpenResume Builder screenshot](docs/screenshot.png)
 
 ## Features
 
 - **Multiple resume profiles** — keep a master resume plus tailored copies per application; New / Duplicate / Rename / Delete from a toolbar dropdown, with per-profile autosave, snapshots, and undo history
-- **Export to PDF, Word (.docx), and plain text (.txt)** — bold/italic become real Word formatting, bullet/numbering styles become real Word numbering, links become clickable hyperlinks; plain text is the most ATS-safe format
+- **Export to JSON, PDF, Word (.docx), and plain text (.txt)** — browser printing provides Save as PDF; bold/italic become real Word formatting, bullet/numbering styles become real Word numbering, links become clickable hyperlinks; plain text is the most ATS-safe format
 - **Dark mode** — three-way System / Light / Dark, applied before first paint (no white flash); the resume preview stays paper-white, because it represents the printed page
 - **Customizable resume sections** — Experience, Education, Skills, Projects, Certifications, Languages, Links, and free-form Custom sections; add, remove, rename, and reorder whole sections, and reorder individual entries within a section
 - **Three templates** — Classic, Modern, and Resumatic (serif, bold header), switchable from a live-thumbnail template gallery
@@ -18,9 +18,9 @@ A free, open-source, cross-platform resume builder built with **Electron + React
 - **Autocomplete & autocorrect** — suggestion dropdowns for Title, Role, Skill, Degree, and Language-proficiency fields, plus real spellcheck with right-click correction suggestions
 - **Snapshot backups** — take a named, timestamped snapshot at any point, then browse/restore/rename/delete from a table, with a confirmation warning before restoring
 - **Autosave status indicator** — "Saving…" / "All changes saved" in the toolbar
-- **Save / Open as JSON** — via the native File menu (Ctrl+O / Ctrl+Shift+S) — keep multiple resume files and reopen them anytime
-- **Automatic update check** — checks GitHub Releases on launch, plus a manual "Check for Updates" button in Settings
-- **Tested** — Vitest unit tests plus a Playwright e2e suite driving the real Electron app; the full suite gates every push and every release build
+- **Import / export JSON** — browser-native file selection and downloads preserve the existing resume format without sending resume data to a server
+- **Responsive browser workspace** — desktop, tablet, and narrow mobile layouts with ordinary browser spellcheck, extensions, and DevTools
+- **Tested** — Vitest unit tests plus a Playwright browser e2e suite; lint, tests, build, and browser smoke checks gate every push
 
 ## Screenshots
 
@@ -36,17 +36,24 @@ A free, open-source, cross-platform resume builder built with **Electron + React
 |---|---|
 | ![Format toolbar](docs/screenshots/formatting.png) | ![Snapshots](docs/screenshots/snapshots.png) |
 
+| Mobile editing | Mobile preview |
+|---|---|
+| ![Mobile editing](docs/screenshots/mobile-details.png) | ![Mobile preview](docs/screenshots/mobile-preview.png) |
+
 More in the [wiki Screenshots page](https://github.com/Abhisek571/openresume-builder/wiki/Screenshots).
 
-## Download
+## Run locally
 
-Get the latest build from the [Releases page](https://github.com/Abhisek571/openresume-builder/releases/latest):
+Requires Node.js 20.19 or newer (an active LTS release is recommended):
 
-- **Windows** — installer (`Setup.exe`) or portable (`.exe`)
-- **macOS** — `.dmg` for Apple Silicon or Intel (built via CI, currently untested on real Mac hardware)
-- **Linux** — `.AppImage` (built via CI, verified on a real Linux kernel via WSL2/WSLg) — see the [wiki's Linux install/run instructions](https://github.com/Abhisek571/openresume-builder/wiki/Installation#linux) for `chmod +x`, FUSE troubleshooting, and desktop integration
+```bash
+npm install
+npm start
+```
 
-These are unsigned builds, so Windows SmartScreen / macOS Gatekeeper will warn about an unidentified developer the first time you run one.
+Open `http://127.0.0.1:4173`. The production server serves the built app and exposes only health/version diagnostics; resume content remains in browser local storage.
+
+Browser support: Chrome/Chromium and Edge are covered by automated checks. Firefox and Safari are supported targets, but their native Print / Save as PDF output still requires platform-specific manual validation.
 
 ## Roadmap
 
@@ -55,12 +62,12 @@ See the [Roadmap wiki page](https://github.com/Abhisek571/openresume-builder/wik
 ## Branches & versions
 
 - **`master`** — latest stable release (currently **v2.2.6**); what the Releases page ships.
-- **`beta-3`** — active development branch for the next major version (**v3**).
+- **`beta-3`** — the Beta 3 browser-first branch for the next major version (**v3**); it is not yet a tagged v3 release.
 - **`beta`** — _retired._ It was the 2.x prerelease channel through v2.2.x and is no longer used for new work; `beta-3` supersedes it.
 
 ## Contributing / running from source
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for setup, running in dev mode, testing, and building installers yourself.
+See [DEVELOPMENT.md](DEVELOPMENT.md) for setup, browser development, testing, and production serving.
 
 ## License
 

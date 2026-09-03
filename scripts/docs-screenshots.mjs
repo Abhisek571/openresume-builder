@@ -1,12 +1,10 @@
 // Regenerates every docs/wiki screenshot against the current production
 // build. Run `npm run build` first, then `node scripts/docs-screenshots.mjs`.
 //
-// Serves the build via `vite preview` and drives it in headless Edge
-// (playwright-core's `msedge` channel — no browser download needed). The
-// Electron preload bridge isn't there in a plain browser, so `window.api`
-// is stubbed with no-ops, and localStorage is seeded with a realistic
-// multi-profile sample resume so the shots show the app doing real work
-// instead of an empty form.
+// Serves the browser build at the stable production-preview origin and drives
+// it in headless Edge (playwright-core's `msedge` channel — no browser download
+// needed). localStorage is seeded with a realistic multi-profile sample resume
+// so the shots show the app doing real work instead of an empty form.
 //
 // Output: docs/screenshot.png (hero) + docs/screenshots/*.png, 1440x900.
 // Copy the results into the wiki clone by hand (or see the release notes
@@ -175,7 +173,7 @@ const seed = {
 // ---- Runner ----------------------------------------------------------------
 
 const PORT = 4173;
-const URL_BASE = `http://localhost:${PORT}/`;
+const URL_BASE = `http://127.0.0.1:${PORT}/`;
 
 async function up() {
   return fetch(URL_BASE).then(() => true).catch(() => false);
@@ -184,9 +182,9 @@ async function up() {
 async function main() {
   let server = null;
   if (!(await up())) {
-    server = spawn('npx', ['vite', 'preview', '--port', String(PORT)], {
+    const viteCli = path.resolve('node_modules', 'vite', 'bin', 'vite.js');
+    server = spawn(process.execPath, [viteCli, 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'], {
       cwd: process.cwd(),
-      shell: true,
       stdio: 'ignore',
     });
     for (let i = 0; i < 40 && !(await up()); i++) await new Promise((r) => setTimeout(r, 300));
@@ -196,18 +194,6 @@ async function main() {
   const browser = await chromium.launch({ channel: 'msedge', headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
   await context.addInitScript(([seedData]) => {
-    // Electron preload bridge is absent in a plain browser — stub it.
-    window.api = {
-      onMenuOpen: () => {},
-      onMenuSaveAs: () => {},
-      setTheme: () => {},
-      loadResume: async () => ({ ok: false }),
-      saveResume: async () => ({ ok: false }),
-      exportPDF: async () => ({ ok: false }),
-      exportDocx: async () => ({ ok: false }),
-      exportText: async () => ({ ok: false }),
-      checkForUpdates: async () => ({ ok: true, hasUpdate: false, version: '0.0.0' }),
-    };
     for (const [k, v] of Object.entries(seedData)) localStorage.setItem(k, v);
   }, [seed]);
 
@@ -263,7 +249,7 @@ async function main() {
   await shot('export.png');
   await page.click('.export-popover .popover-close');
 
-  // 9. Settings popover (Appearance toggle + version + update check).
+  // 9. Settings popover (Appearance toggle + version).
   await page.click('.icon-btn[title="Settings"]');
   await shot('settings.png');
 
@@ -272,6 +258,15 @@ async function main() {
   await page.click('.icon-btn[title="Settings"]');
   await page.click('.nav-pane button.nav-item:has-text("Experience")');
   await shot('dark-mode.png');
+
+  // 11–12. Browser-only responsive views at a narrow phone viewport.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.click('.icon-btn[title="Settings"]');
+  await page.click('.theme-toggle button:has-text("Light")');
+  await page.click('.icon-btn[title="Settings"]');
+  await shot('mobile-details.png');
+  await page.click('.tabs button:has-text("Final Preview")');
+  await shot('mobile-preview.png');
 
   await browser.close();
   if (server) server.kill();

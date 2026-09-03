@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Beta 3 browser migration
+
+- Replaced the Electron runtime with a browser-first React/Vite application and a minimal built-in Node server at a stable local origin.
+- Replaced Electron IPC file operations with validated browser JSON import, JSON/TXT/DOCX downloads, and the browser Print / Save as PDF workflow.
+- Preserved the existing resume schema, local profiles and snapshots, undo/redo, rich-text markers, templates, export model, themes, storage keys, and paper-white output.
+- Added focused browser platform adapters and a same-origin API boundary; the initial server only serves `dist/` plus `GET /api/health` and `GET /api/version`.
+- Ported Playwright coverage to a normal browser and added import/download/print, refresh persistence, system-theme, and responsive desktop/tablet/mobile checks.
+- Removed Electron boot, preload/IPC, updater, packaging configuration, release workflows, and runtime dependencies.
+
 ## 2.2.6
 
 Stable release promoting the accumulated 2.2.x work (everything from 2.2.0-beta.1 through 2.2.5 below) to the stable channel. No app changes beyond 2.2.5 — this release stabilized the e2e smoke test on CI (the profile-switcher popover is now opened via a direct DOM click instead of a coordinate click, which could land on the overlapping centered tab group on the CI runner's small virtual display).
