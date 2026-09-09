@@ -5,6 +5,7 @@ import { isLikelyValidUrl } from './contactFields.js';
 import { BULLET_STYLE_GROUPS, normalizeBulletStyle } from './bulletStyles.js';
 import RichBulletField, { buildLineElement, lineElementToMarkerText, getLineElement } from './RichBulletField.jsx';
 import { detectWrap, applyLineToggle, toggleLinesBullet } from './textEditing.js';
+import { formattingShortcut, hasPrimaryModifier } from './shortcuts.js';
 import MonthYearField from './MonthYearField.jsx';
 
 export default function Editor({ resume, setResume, activeSection }) {
@@ -114,6 +115,17 @@ export default function Editor({ resume, setResume, activeSection }) {
     });
   };
 
+  // Keep universal formatting shortcuts scoped to the currently focused
+  // formattable textarea/contenteditable. This prevents a stale rich-field
+  // selection from being changed while someone types in an ordinary input.
+  const handleFormattingKeyDown = (e) => {
+    const which = formattingShortcut(e);
+    const el = e.target;
+    if (!which || el !== activeFieldRef.current || !(el.isContentEditable || el.tagName === 'TEXTAREA')) return;
+    e.preventDefault();
+    applyMark(which);
+  };
+
   const pickListStyle = (styleId) => {
     if (!activeListSetStyleRef.current) return;
     activeListSetStyleRef.current(styleId);
@@ -194,7 +206,7 @@ export default function Editor({ resume, setResume, activeSection }) {
     const lineStart = v.lastIndexOf('\n', s - 1) + 1;
     const indentOf = (text) => (text.match(/^ */) || [''])[0];
 
-    if (e.ctrlKey && (e.key === ']' || e.key === '[')) {
+    if (hasPrimaryModifier(e) && (e.key === ']' || e.key === '[')) {
       e.preventDefault();
       if (e.key === '[') {
         const remove = Math.min(2, indentOf(v.slice(lineStart)).length);
@@ -297,7 +309,7 @@ export default function Editor({ resume, setResume, activeSection }) {
       >
         ¶
       </button>
-      <span className="format-hint">Select text in Summary or a bullet field for B/I (combine both on the same selection for bold+italic). In a bullet field: Ctrl+]/Ctrl+[ indents/outdents a sub-bullet, Tab moves to the next field, Enter starts a new point. Highlight a line and click ¶ to pull it out of the list (or back in). Use the list-style button to pick a bullet or numbering style.</span>
+      <span className="format-hint">Select text in Summary or a bullet field for B/I (combine both on the same selection for bold+italic). In a bullet field: Ctrl/Cmd+]/Ctrl/Cmd+[ indents/outdents a sub-bullet, Tab moves to the next field, Enter starts a new point. Highlight a line and click ¶ to pull it out of the list (or back in). Use the list-style button to pick a bullet or numbering style.</span>
     </div>
   );
 
@@ -312,7 +324,7 @@ export default function Editor({ resume, setResume, activeSection }) {
   if (activeSection === 'personal') {
     const p = resume.personal;
     return (
-      <div className="editor">
+      <div className="editor" onKeyDownCapture={handleFormattingKeyDown}>
         <FormatToolbar />
         <h2>Personal</h2>
         <input spellCheck={false} placeholder="Name" value={p.name} onChange={(e) => setPersonal('name', e.target.value)} />
@@ -339,7 +351,7 @@ export default function Editor({ resume, setResume, activeSection }) {
   if (!section) return <div className="editor"><p>Section not found.</p></div>;
 
   return (
-    <div className="editor">
+    <div className="editor" onKeyDownCapture={handleFormattingKeyDown}>
       <FormatToolbar />
       <h2>
         <input
@@ -393,7 +405,7 @@ export default function Editor({ resume, setResume, activeSection }) {
       {section.type === 'custom' && (
         <RichBulletField
           className="bullet-field rich-bullet-field"
-          placeholder="One bullet per line (Ctrl+]/Ctrl+[ to indent a sub-bullet)"
+          placeholder="One bullet per line (Ctrl/Cmd+]/Ctrl/Cmd+[ to indent a sub-bullet)"
           value={section.items.join('\n')}
           onChange={(v) => setItems(section.id, v.split('\n'))}
           onFocusField={registerFormattable(

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { hasPrimaryModifier } from './shortcuts.js';
 
 // A contenteditable bullet editor that LOOKS like real bold/italic (no
 // visible ** / * markers) while still reading/writing the same marker-string
@@ -202,7 +203,7 @@ export default function RichBulletField({ value, onChange, onFocusField, placeho
     const lineEl = getLineElement(range.startContainer, el);
     if (!lineEl) return;
 
-    if (e.ctrlKey && (e.key === ']' || e.key === '[')) {
+    if (hasPrimaryModifier(e) && (e.key === ']' || e.key === '[')) {
       if (singleLine) {
         e.preventDefault(); // no sub-bullet indent concept for a one-line field
         return;

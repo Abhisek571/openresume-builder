@@ -12,7 +12,7 @@ OpenResume Builder Beta 3 is the browser-first release: a free, open-source resu
 - **Customizable resume sections** — Experience, Education, Skills, Projects, Certifications, Languages, Links, and free-form Custom sections; add, remove, rename, and reorder whole sections, and reorder individual entries within a section
 - **Three templates** — Classic, Modern, and Resumatic (serif, bold header), switchable from a live-thumbnail template gallery
 - **Template / Details / Final Preview workspace** — pick a template visually, edit in the section-based form, then check a clean chrome-free preview before exporting
-- **WYSIWYG bold/italic** — Experience descriptions, Custom Section, and Skills render real bold/italic as you type, no visible `**`/`*` markup; combinable into bold+italic, with a Word/LibreOffice-style bullet & numbering picker (•, ○, ▪, –, 1., a., A., i., I.), an intro-sentence-before-the-list option, and Word-style list editing (Ctrl+]/Ctrl+[ to indent, Enter continues the list)
+- **WYSIWYG bold/italic** — Experience descriptions, Custom Section, and Skills render real bold/italic as you type, no visible `**`/`*` markup; use Ctrl/Cmd+B or Ctrl/Cmd+I on selected text (or the toolbar); combinable into bold+italic, with a Word/LibreOffice-style bullet & numbering picker (•, ○, ▪, –, 1., a., A., i., I.), an intro-sentence-before-the-list option, and Word-style list editing (Ctrl/Cmd+] / Ctrl/Cmd+[ to indent, Enter continues the list)
 - **Undo/redo** — Ctrl+Z / Ctrl+Y plus ↶/↷ toolbar buttons; rapid edits coalesce so undo rewinds a typing burst, not a keystroke
 - **Month/year date picker** — click a Start/End field (Experience, Education, Projects) for a year navigator and month grid, with a "Present" quick-pick and future dates blocked automatically
 - **Autocomplete & autocorrect** — suggestion dropdowns for Title, Role, Skill, Degree, and Language-proficiency fields, plus real spellcheck with right-click correction suggestions
@@ -41,6 +41,10 @@ OpenResume Builder Beta 3 is the browser-first release: a free, open-source resu
 | ![Mobile editing](docs/screenshots/mobile-details.png) | ![Mobile preview](docs/screenshots/mobile-preview.png) |
 
 More in the [wiki Screenshots page](https://github.com/Abhisek571/openresume-builder/wiki/Screenshots).
+
+## Keyboard shortcuts
+
+See the browser-app [Keyboard Shortcuts reference](docs/keyboard-shortcuts.md) for formatting, undo/redo, bullet editing, and intentional no-op behavior.
 
 ## Run locally
 

@@ -121,16 +121,20 @@ async function downloadFromExport(page, label) {
 
 async function selectText(page, selector, textToSelect, collapseAtEnd = false) {
   await page.locator(selector).evaluate((root, args) => {
+    root.focus();
     const line = root.querySelector(args.last ? '.rb-line:last-child' : '.rb-line');
     const range = document.createRange();
-    if (args.text && line?.firstChild?.nodeType === Node.TEXT_NODE) {
-      const start = line.firstChild.textContent.indexOf(args.text);
-      if (start >= 0) {
-        range.setStart(line.firstChild, start);
-        range.setEnd(line.firstChild, start + args.text.length);
-      } else {
-        range.selectNodeContents(line);
+    let textNode = null;
+    if (args.text && line) {
+      const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+      while (!textNode && walker.nextNode()) {
+        if (walker.currentNode.textContent.includes(args.text)) textNode = walker.currentNode;
       }
+    }
+    if (textNode) {
+      const start = textNode.textContent.indexOf(args.text);
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + args.text.length);
     } else {
       range.selectNodeContents(line);
       if (args.collapseAtEnd) range.collapse(false);
@@ -230,23 +234,51 @@ async function main() {
     await page.waitForTimeout(700);
     await nameInput.fill('Marcus Bennett');
 
+    // Ctrl/Cmd+B/I must format a selected legacy textarea value as well as rich fields.
+    const summaryField = page.locator('.editor textarea[placeholder="Summary"]');
+    await summaryField.fill('Experienced communicator');
+    await summaryField.click();
+    await summaryField.evaluate((element) => element.setSelectionRange(0, 'Experienced'.length));
+    await page.keyboard.press('Control+B');
+    check('Ctrl+B formats selected Summary textarea text', await summaryField.inputValue() === '**Experienced** communicator');
+    await summaryField.evaluate((element) => {
+      const start = element.value.indexOf('communicator');
+      element.setSelectionRange(start, start + 'communicator'.length);
+    });
+    await page.keyboard.press('Control+I');
+    check('Ctrl+I formats selected Summary textarea text', await summaryField.inputValue() === '**Experienced** *communicator*');
+
     // Rich text, line creation, indentation, and paragraph promotion.
     await page.locator('.nav-pane button.nav-item', { hasText: 'Experience' }).click();
     const richField = page.locator('.editor .rich-bullet-field');
     check('experience bullets field is a contenteditable div', await richField.evaluate((el) => el.tagName === 'DIV'));
     await selectText(page, '.editor .rich-bullet-field', 'migration');
-    await page.locator('.format-toolbar button[title="Bold selected text"]').click();
+    await page.keyboard.press('Control+B');
     await page.waitForTimeout(150);
-    check('bold via toolbar leaves no visible asterisks', !(await richField.textContent()).includes('*'));
-    const experienceHtml = await page.locator('.preview-pane .r-entry ul li:first-child, .preview-pane .r-entry .r-bullet-intro')
+    check('Ctrl+B formats selected rich text without visible asterisks', !(await richField.textContent()).includes('*'));
+    let experienceHtml = await page.locator('.preview-pane .r-entry ul li:first-child, .preview-pane .r-entry .r-bullet-intro')
       .first().innerHTML().catch(() => '');
-    check('bold survives into the preview as real <strong>', experienceHtml.includes('<strong>migration</strong>'), experienceHtml);
+    check('Ctrl+B survives into the preview as real <strong>', experienceHtml.includes('<strong>migration</strong>'), experienceHtml);
+
+    await selectText(page, '.editor .rich-bullet-field', 'modular');
+    await page.keyboard.press('Control+I');
+    await page.waitForTimeout(150);
+    experienceHtml = await page.locator('.preview-pane .r-entry ul li:first-child, .preview-pane .r-entry .r-bullet-intro')
+      .first().innerHTML().catch(() => '');
+    check('Ctrl+I formats selected rich text as real <em>', experienceHtml.includes('<em>modular</em>'), experienceHtml);
+    await page.waitForTimeout(600);
+    check('Ctrl+B/Ctrl+I formatting persists in browser-local resume data', await page.evaluate(() =>
+      Object.entries(localStorage)
+        .filter(([key]) => key.startsWith('resume-builder:profile:'))
+        .some(([, value]) => value.includes('**migration**') && value.includes('*modular*'))));
 
     await selectText(page, '.editor .rich-bullet-field', null, true);
     const beforeNoSelection = await richField.textContent();
-    await page.locator('.format-toolbar button[title="Bold selected text"]').click();
-    check('bold with no selection does not insert placeholder text',
+    await page.keyboard.press('Control+B');
+    check('Ctrl+B with no rich-text selection does not insert placeholder text',
       beforeNoSelection === await richField.textContent());
+    check('Ctrl+B at a rich-text caret preserves browser typing-format behavior',
+      await richField.evaluate(() => document.queryCommandState('bold')));
 
     await selectText(page, '.editor .rich-bullet-field', null, true);
     const linesBefore = await richField.locator('.rb-line').count();
@@ -258,6 +290,10 @@ async function main() {
     const indented = await richField.locator('.rb-line:last-child').evaluate((el) =>
       el.firstChild?.nodeType === Node.TEXT_NODE ? el.firstChild.textContent : '');
     check('Ctrl+] indents the current line with 2 leading spaces', indented.startsWith('  '), JSON.stringify(indented));
+    await page.keyboard.press('Control+[');
+    const outdented = await richField.locator('.rb-line:last-child').evaluate((el) =>
+      el.firstChild?.nodeType === Node.TEXT_NODE ? el.firstChild.textContent : '');
+    check('Ctrl+[ outdents the current sub-bullet', !outdented.startsWith('  '), JSON.stringify(outdented));
 
     await selectText(page, '.editor .rich-bullet-field');
     const paragraphButton = page.locator('.format-toolbar button[title="Move the highlighted line(s) into or out of the bulleted list"]');
