@@ -29,7 +29,7 @@
     "jsdom": "^29.1.1",
     "playwright-core": "^1.61.1",
     "vite": "^6.4.3",
-    "vitest": "^4.1.9",
+    "vitest": "^4.1.11",
     "wait-on": "^8.0.1"
   },
   "dependencies": {
