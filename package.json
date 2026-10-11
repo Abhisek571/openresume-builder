@@ -1,6 +1,6 @@
 {
   "name": "openresume-builder",
-  "version": "2.2.6",
+  "version": "3.0.0",
   "description": "OpenResume Builder — open-source browser-first resume builder",
   "type": "module",
   "engines": {

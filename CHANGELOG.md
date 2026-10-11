@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Beta 3 browser migration
+## 3.0.0 — Browser-first release
 
 - Replaced the Electron runtime with a browser-first React/Vite application and a minimal built-in Node server at a stable local origin.
 - Replaced Electron IPC file operations with validated browser JSON import, JSON/TXT/DOCX downloads, and the browser Print / Save as PDF workflow.
