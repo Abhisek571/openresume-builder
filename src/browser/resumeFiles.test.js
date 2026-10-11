@@ -39,6 +39,10 @@ describe('resume file validation', () => {
     [{ personal: {}, sections: [{ type: 'custom', title: {}, items: [] }] }, 'invalid-section-title'],
     [{ unrelated: true }, 'unrecognized-resume'],
     [{ personal: {}, skills: 'JavaScript' }, 'invalid-legacy-field'],
+    [{ personal: {}, experience: [null] }, 'invalid-section-item'],
+    [{ personal: {}, sections: [{ type: 'unknown', items: [{}] }] }, 'invalid-section-item'],
+    [{ personal: {}, sections: [{ id: 'same', type: 'skills', items: [] }, { id: 'same', type: 'skills', items: [] }] }, 'duplicate-section-id'],
+    [{ personal: {}, sections: [{ id: {}, type: 'skills', items: [] }] }, 'invalid-section-id'],
   ])('rejects malformed resume structures', (data, code) => {
     expect(() => validateResumeData(data)).toThrow(expect.objectContaining({ code }));
   });
@@ -78,6 +82,18 @@ describe('readResumeFile', () => {
     });
     await expect(readResumeFile({ name: 'resume.json', text: async () => { throw new Error('denied'); } }))
       .rejects.toMatchObject({ code: 'read-failed', cause: expect.any(Error) });
+  });
+
+  it('repairs missing IDs without discarding unknown data and accepts a UTF-8 BOM', async () => {
+    const data = { personal: {}, sections: [{ type: 'projects', title: 'Projects', items: [{ name: 'A', future: 'keep' }, { name: 'B' }] }] };
+    const result = await readResumeFile({ name: 'resume.json', text: async () => '\uFEFF' + JSON.stringify(data) });
+    expect(result.sections[0].id).toEqual(expect.any(String));
+    const [a, b] = result.sections[0].items;
+    expect(a.id).not.toBe(b.id);
+    expect(a.future).toBe('keep');
+  });
+  it('rejects oversized files before reading their contents', async () => {
+    await expect(readResumeFile({ name: 'resume.json', size: 6 * 1024 * 1024, text: async () => { throw Error('must not read'); } })).rejects.toMatchObject({ code: 'file-too-large' });
   });
 
   it('exposes an accept value for JSON file inputs', () => {

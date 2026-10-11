@@ -471,7 +471,48 @@ html { background: var(--editor-bg); }
 .resume-sheet ul.r-list.style-upper-roman li:not(.sub)::before { content: counter(r-list-count, upper-roman) '.'; }
 
 .resume-file-input { display: none; }
-.print-resume { display: none; }
+.hidden { display: none !important; }
+.match-slot { flex: 0 0 320px; min-width: 0; overflow: auto; background: var(--surface); color: var(--surface-text); border-right: 1px solid var(--surface-border); }
+.job-match { padding: 16px; font-size: 13px; line-height: 1.5; }
+.job-match h2 { margin: 0 0 8px; font-size: 18px; }
+.job-match p { color: var(--surface-muted); }
+.job-match label { display: block; margin: 16px 0; font-weight: 600; }
+.job-match input, .job-match textarea { display: block; width: 100%; margin-top: 6px; padding: 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--editor-bg); color: var(--surface-text); font: inherit; }
+.job-match textarea { min-height: 160px; resize: vertical; }
+.job-match .match-summary { color: var(--surface-text); font-weight: 600; }
+.match-results, .match-results ul { padding-left: 16px; }
+.match-results button { background: transparent; color: var(--surface-text); border: 0; padding: 6px 0; text-align: left; font: inherit; text-decoration: underline; cursor: pointer; overflow-wrap: anywhere; }
+.shortcuts-dialog { max-width: min(560px, calc(100vw - 32px)); max-height: 85vh; overflow: auto; border: 1px solid var(--surface-border); border-radius: 10px; padding: 24px; background: var(--surface); color: var(--surface-text); }
+.shortcuts-dialog::backdrop { background: rgb(0 0 0 / 55%); }
+.shortcuts-dialog dl { display: grid; grid-template-columns: max-content 1fr; gap: 12px; font-size: 14px; }
+.shortcuts-dialog dd { margin: 0; }
+.shortcuts-dialog button { padding: 8px 16px; border-radius: 6px; border: 0; background: var(--accent); color: white; cursor: pointer; }
+.toolbar { position: relative; z-index: 20; }
+.toolbar-row { flex-wrap: wrap; }
+.status { overflow-wrap: anywhere; }
+.resume-sheet { flex-shrink: 0; overflow-wrap: anywhere; }
+@media screen and (max-width: 1199px) {
+  .workspace:has(.match-slot:not(.hidden)) { flex-wrap: wrap; overflow-y: auto; }
+  .match-slot { flex-basis: 100%; max-height: 320px; border-bottom: 1px solid var(--surface-border); }
+}
+@media screen and (max-width: 767px) {
+  .match-slot { flex-basis: auto; width: 100%; }
+  .shortcuts-dialog dl { grid-template-columns: 1fr; gap: 6px; }
+  .shortcuts-dialog dd { margin-bottom: 8px; }
+}
+.print-resume { position: fixed; left: -10000px; top: 0; width: 210mm; visibility: hidden; }
+.paged-preview { flex-shrink: 0; width: calc(210mm * var(--preview-scale, 1)); }
+.pagination-source { position: fixed; left: -20000px; top: 0; width: 210mm; visibility: hidden; pointer-events: none; }
+.paged-pages { display: flex; flex-direction: column; gap: 24px; zoom: var(--preview-scale, 1); }
+.paged-pages > .resume-page { position: relative; height: 297mm; min-height: 297mm; flex: none; }
+.page-content { display: flow-root; }
+.resume-page::after { content: attr(data-page-label); position: absolute; bottom: 7mm; left: 0; right: 0; text-align: center; font: 11px system-ui, sans-serif; color: var(--paper-ink-soft); }
+.paged-pages > .oversize-page { height: auto; padding-bottom: 18mm; }
+.pagination-warning { background: var(--surface); color: var(--surface-text); padding: 12px; }
+
+
+
+
 
 /* Browser layouts retain the desktop workbench while allowing the toolbar and
    panes to reflow once there is no Electron-enforced minimum window size. */
@@ -505,23 +546,15 @@ html { background: var(--editor-bg); }
   .nav-pane .nav-add { margin: 0 0 0 4px; min-width: 120px; }
   .editor-pane { box-sizing: border-box; width: 100%; max-height: none; overflow: visible; padding: 12px; }
   .preview-pane, .final-preview-pane { box-sizing: border-box; width: 100%; padding: 12px; }
-  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet {
-    zoom: 90%;
-  }
+
   .status { flex: 1; min-width: 140px; }
 }
 
-@media screen and (max-width: 620px) {
-  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet { zoom: 70%; }
-}
 
-@media screen and (max-width: 480px) {
-  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet { zoom: 54%; }
-}
 
-@media screen and (max-width: 360px) {
-  .preview-pane .resume-sheet, .final-preview-pane .resume-sheet { zoom: 40%; }
-}
+
+
+
 
 /* Print / PDF: only the sheet shows, full bleed. Force light regardless of
    the app theme — the export is always a paper-white page. */
@@ -529,7 +562,13 @@ html { background: var(--editor-bg); }
   @page { size: A4; margin: 0; }
   :root { color-scheme: light; }
   html, body, #root, .app { height: auto; overflow: visible; background: #fff; }
-  .toolbar, .workspace { display: none !important; }
-  .print-resume { display: block; }
-  .print-resume .resume-sheet { box-shadow: none; width: 100%; min-height: auto; zoom: 1; }
+  .toolbar, .workspace, .pagination-source, .pagination-warning, .shortcuts-dialog { display: none !important; }
+  .print-resume { display: block; position: static; visibility: visible; width: auto; }
+  .print-resume .paged-preview { width: auto; --preview-scale: 1 !important; }
+  .print-resume .paged-pages { display: block; }
+  .print-resume .resume-sheet { box-shadow: none; width: 210mm; zoom: 1; }
+  .resume-page:not(:last-child) { break-after: page; }
+  .resume-sheet h3, .r-entry-head, .r-entry-sub { break-after: avoid; }
+  .resume-sheet li, .r-skill-line { break-inside: avoid; }
+  .resume-sheet p { orphans: 2; widows: 2; }
 }

@@ -1,9 +1,9 @@
 import Preview from './Preview.jsx';
 
 const TEMPLATES = [
-  { id: 'resumatic', label: 'Resumatic' },
-  { id: 'classic', label: 'Classic' },
-  { id: 'modern', label: 'Modern' },
+  { id: 'resumatic', label: 'Resumatic', description: 'Balanced, clear and versatile' },
+  { id: 'classic', label: 'Classic', description: 'Traditional and understated' },
+  { id: 'modern', label: 'Modern', description: 'Contemporary with a subtle accent' },
 ];
 
 // Live-rendered thumbnails (scaled-down actual previews) instead of static
@@ -15,6 +15,7 @@ export default function TemplateGallery({ resume, template, setTemplate }) {
         <button
           key={t.id}
           className={`template-card ${template === t.id ? 'active' : ''}`}
+          aria-pressed={template === t.id}
           onClick={() => setTemplate(t.id)}
         >
           <div className="template-thumb">
@@ -22,7 +23,8 @@ export default function TemplateGallery({ resume, template, setTemplate }) {
               <Preview resume={resume} template={t.id} />
             </div>
           </div>
-          <div className="template-label">{t.label}</div>
+          <div className="template-label">{t.label}<span>{template === t.id ? '✓' : ''}</span></div>
+          <p className="template-description">{t.description}</p>
         </button>
       ))}
     </div>

@@ -30,7 +30,7 @@ function currentYearMonth() {
 // small popover — a year header with ‹ › navigation and a month grid — that
 // writes "Mon YYYY" into it. Reusable across any section with start/end
 // fields; Experience is the first one wired up.
-export default function MonthYearField({ value, onChange, placeholder, allowPresent, spellCheck }) {
+export default function MonthYearField({ value, onChange, placeholder, allowPresent, spellCheck, disabled = false }) {
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(() => parseValue(value)?.year || new Date().getFullYear());
   const wrapRef = useRef(null);
@@ -64,21 +64,23 @@ export default function MonthYearField({ value, onChange, placeholder, allowPres
     <div className="month-year-field" ref={wrapRef}>
       <input
         spellCheck={spellCheck}
+        disabled={disabled}
+        aria-label={placeholder}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={openPicker}
       />
-      <button
+      {!disabled && <button
         type="button"
         className="month-year-toggle"
         title="Pick month & year"
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => (open ? setOpen(false) : openPicker())}
       >
-        📅
-      </button>
-      {open && (
+        ▾
+      </button>}
+      {open && !disabled && (
         <div className="month-year-popover">
           <div className="month-year-nav">
             <button type="button" onClick={() => setViewYear((y) => y - 1)}>‹</button>

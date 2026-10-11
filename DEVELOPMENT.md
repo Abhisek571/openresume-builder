@@ -51,6 +51,9 @@ The browser smoke suite uses `playwright-core` with an installed Chrome, Edge, o
 - JSON, TXT, and DOCX exports download directly in the browser.
 - `Print / PDF` opens the browser print dialog; choose the browser's Save as PDF destination.
 - System/Light/Dark follows browser media preferences and keeps the resume sheet paper-white.
+- Settings contains full backup/restore and the keyboard-shortcut cheatsheet. JSON Resume interchange has separate import/export controls.
+- `PaginatedPreview.jsx` and `browser/pagination.js` turn escaped preview DOM into explicit A4 fragments for both screen and print; the original `Preview.jsx` still renders gallery thumbnails.
+- Job Match runs locally and does not persist job descriptions. See [mapping and backup semantics](docs/browser-interoperability.md).
 
 ## Project structure
 

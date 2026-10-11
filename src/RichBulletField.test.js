@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildLineElement, lineElementToMarkerText, getLineElement } from './RichBulletField.jsx';
+import { buildLineElement, lineElementToMarkerText, getLineElement } from './richBulletDom.js';
 
 describe('buildLineElement', () => {
   it('builds a plain text line with no markup', () => {

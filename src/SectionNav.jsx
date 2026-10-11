@@ -1,3 +1,4 @@
+import Icon from './Icon';
 import { SECTION_TYPES, createSection } from './data.js';
 
 export default function SectionNav({ resume, setResume, activeSection, setActiveSection }) {
@@ -30,7 +31,7 @@ export default function SectionNav({ resume, setResume, activeSection, setActive
         className={`nav-item ${activeSection === 'personal' ? 'active' : ''}`}
         onClick={() => setActiveSection('personal')}
       >
-        Personal
+        <Icon name="person" size={17} /><span>Personal</span>
       </button>
 
       {resume.sections.map((s, i) => (
@@ -39,7 +40,7 @@ export default function SectionNav({ resume, setResume, activeSection, setActive
             className={`nav-item ${activeSection === s.id ? 'active' : ''}`}
             onClick={() => setActiveSection(s.id)}
           >
-            {s.title} ({countItems(s)})
+            <Icon name={s.type === 'experience' ? 'briefcase' : 'document'} size={17} /><span>{s.title}</span><small>{countItems(s)}</small>
           </button>
           <div className="nav-arrows">
             <button title="Move up" disabled={i === 0} onClick={() => move(i, -1)}>▲</button>
@@ -51,6 +52,7 @@ export default function SectionNav({ resume, setResume, activeSection, setActive
 
       <select
         className="nav-add"
+        aria-label="Add section"
         value=""
         onChange={(e) => {
           if (e.target.value) addSection(e.target.value);

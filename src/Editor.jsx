@@ -3,12 +3,15 @@ import { SECTION_TYPES } from './data.js';
 import { JOB_TITLE_SUGGESTIONS, DEGREE_SUGGESTIONS, PROFICIENCY_SUGGESTIONS } from './autocompleteData.js';
 import { isLikelyValidUrl } from './contactFields.js';
 import { BULLET_STYLE_GROUPS, normalizeBulletStyle } from './bulletStyles.js';
-import RichBulletField, { buildLineElement, lineElementToMarkerText, getLineElement } from './RichBulletField.jsx';
+import RichBulletField from './RichBulletField.jsx';
+import { buildLineElement, lineElementToMarkerText, getLineElement } from './richBulletDom.js';
 import { detectWrap, applyLineToggle, toggleLinesBullet } from './textEditing.js';
 import { formattingShortcut, hasPrimaryModifier } from './shortcuts.js';
 import MonthYearField from './MonthYearField.jsx';
+import Icon from './Icon';
 
 export default function Editor({ resume, setResume, activeSection }) {
+  const [collapsed, setCollapsed] = useState({});
   // Functional setResume(prev => ...) everywhere below, NOT setResume({...resume, ...}).
   // The format toolbar (Bold/Italic/"1.") stashes these update functions in a ref at
   // focus-time and calls them later, by which point further typing has moved `resume`
@@ -309,7 +312,7 @@ export default function Editor({ resume, setResume, activeSection }) {
       >
         ¶
       </button>
-      <span className="format-hint">Select text in Summary or a bullet field for B/I (combine both on the same selection for bold+italic). In a bullet field: Ctrl/Cmd+]/Ctrl/Cmd+[ indents/outdents a sub-bullet, Tab moves to the next field, Enter starts a new point. Highlight a line and click ¶ to pull it out of the list (or back in). Use the list-style button to pick a bullet or numbering style.</span>
+      <details className="format-help"><summary>Formatting help</summary><span className="format-hint">Select text in Summary or a bullet field for B/I (combine both on the same selection for bold+italic). In a bullet field: Ctrl/Cmd+]/Ctrl/Cmd+[ indents/outdents a sub-bullet, Tab moves to the next field, Enter starts a new point. Highlight a line and click ¶ to pull it out of the list (or back in). Use the list-style button to pick a bullet or numbering style.</span></details>
     </div>
   );
 
@@ -327,19 +330,20 @@ export default function Editor({ resume, setResume, activeSection }) {
       <div className="editor" onKeyDownCapture={handleFormattingKeyDown}>
         <FormatToolbar />
         <h2>Personal</h2>
-        <input spellCheck={false} placeholder="Name" value={p.name} onChange={(e) => setPersonal('name', e.target.value)} />
-        <input spellCheck list="job-title-suggestions" placeholder="Title" value={p.title} onChange={(e) => setPersonal('title', e.target.value)} />
-        <input spellCheck={false} placeholder="Email" value={p.email} onChange={(e) => setPersonal('email', e.target.value)} />
-        <input spellCheck={false} placeholder="Phone" value={p.phone} onChange={(e) => setPersonal('phone', e.target.value)} />
-        <input spellCheck placeholder="Location" value={p.location} onChange={(e) => setPersonal('location', e.target.value)} />
-        <input spellCheck={false} placeholder="Website" value={p.website} onChange={(e) => setPersonal('website', e.target.value)} />
-        <textarea
+        <label className="editor-field"><span>Name</span><input spellCheck={false} placeholder="Name" value={p.name} onChange={(e) => setPersonal('name', e.target.value)} /></label>
+        <label className="editor-field"><span>Title</span><input spellCheck list="job-title-suggestions" placeholder="Title" value={p.title} onChange={(e) => setPersonal('title', e.target.value)} /></label>
+        <label className="editor-field"><span>Email</span><input spellCheck={false} placeholder="Email" value={p.email} onChange={(e) => setPersonal('email', e.target.value)} /></label>
+        <label className="editor-field"><span>Phone</span><input spellCheck={false} placeholder="Phone" value={p.phone} onChange={(e) => setPersonal('phone', e.target.value)} /></label>
+        <label className="editor-field"><span>Location</span><input spellCheck placeholder="Location" value={p.location} onChange={(e) => setPersonal('location', e.target.value)} /></label>
+        <label className="editor-field"><span>Website</span><input spellCheck={false} placeholder="Website" value={p.website} onChange={(e) => setPersonal('website', e.target.value)} /></label>
+        <label className="editor-field" htmlFor="personal-summary">Summary</label>
+        <textarea id="personal-summary"
           spellCheck
           placeholder="Summary"
           value={p.summary}
           onFocus={registerFormattable((v) => setPersonal('summary', v))}
           onChange={(e) => setPersonal('summary', e.target.value)}
-        />
+                  />
         <datalist id="job-title-suggestions">
           {JOB_TITLE_SUGGESTIONS.map((t) => <option key={t} value={t} />)}
         </datalist>
@@ -417,29 +421,31 @@ export default function Editor({ resume, setResume, activeSection }) {
 
       {SECTION_TYPES[section.type].fields && section.items.map((x, i) => (
         <div className="card" key={x.id}>
+          <button className="entry-heading" aria-expanded={!collapsed[x.id]} onClick={() => setCollapsed(prev => ({ ...prev, [x.id]: !prev[x.id] }))}><span><strong>{x.role || x.degree || x.name || `Entry ${i + 1}`}</strong><small>{[x.company || x.school, x.start, x.end].filter(Boolean).join(' · ')}</small></span><span className={collapsed[x.id] ? 'chevron-collapsed' : ''}><Icon name="chevron" /></span></button>
+          <div hidden={!!collapsed[x.id]}>
           <CardControls index={i} total={section.items.length} onRemove={() => removeItem(section.id, x.id)} />
+          {section.type === 'experience' && <label className="current-role"><input type="checkbox" checked={x.end === 'Present'} onChange={event => updateItem(section.id, x.id, 'end', event.target.checked ? 'Present' : '')} />I currently work here</label>}
           {SECTION_TYPES[section.type].fields.map((f, fi) =>
             f.row ? (
               <div className="row" key={fi}>
                 {f.row.map((rf) =>
                   rf.monthYear ? (
-                    <MonthYearField
-                      key={rf.key}
+                    <label className="editor-field" key={rf.key}><span>{rf.placeholder} date</span><MonthYearField
                       placeholder={rf.placeholder}
                       allowPresent={rf.allowPresent}
+                      disabled={section.type === 'experience' && rf.key === 'end' && x.end === 'Present'}
                       spellCheck={rf.spellCheck}
                       value={x[rf.key]}
                       onChange={(v) => updateItem(section.id, x.id, rf.key, v)}
-                    />
+                    /></label>
                   ) : (
-                    <input
-                      key={rf.key}
+                    <label className="editor-field" key={rf.key}><span>{rf.key === 'location' ? 'Location' : rf.placeholder}</span><input
                       spellCheck={rf.spellCheck}
                       list={rf.list}
                       placeholder={rf.placeholder}
                       value={x[rf.key]}
                       onChange={(e) => updateItem(section.id, x.id, rf.key, e.target.value)}
-                    />
+                    /></label>
                   )
                 )}
               </div>
@@ -458,15 +464,15 @@ export default function Editor({ resume, setResume, activeSection }) {
                 )}
               </div>
             ) : (
-              <input
-                key={f.key}
+              <label className="editor-field" key={f.key}><span>{f.placeholder}</span><input
                 spellCheck={f.spellCheck}
                 placeholder={f.placeholder}
                 value={x[f.key]}
                 onChange={(e) => updateItem(section.id, x.id, f.key, e.target.value)}
-              />
+              /></label>
             )
           )}
+          {SECTION_TYPES[section.type].bullets && <p className="highlights-label">Highlights</p>}
           {SECTION_TYPES[section.type].bullets && SECTION_TYPES[section.type].bullets.richText && (
             <RichBulletField
               className="bullet-field rich-bullet-field"
@@ -487,6 +493,7 @@ export default function Editor({ resume, setResume, activeSection }) {
               onKeyDown={handleBulletKeyDown((v) => setBullets(section.id, x.id, v))}
             />
           )}
+          </div>
         </div>
       ))}
 

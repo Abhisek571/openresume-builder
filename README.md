@@ -1,6 +1,6 @@
 # OpenResume Builder
 
-OpenResume Builder Beta 3 is the browser-first release: a free, open-source resume builder built with **React + Vite** and served by a minimal Node server.
+OpenResume Builder 3.0 is the browser-first release: a free, open-source resume builder built with **React + Vite** and served by a minimal Node server.
 
 ![OpenResume Builder screenshot](docs/screenshot.png)
 
@@ -18,7 +18,11 @@ OpenResume Builder Beta 3 is the browser-first release: a free, open-source resu
 - **Autocomplete & autocorrect** — suggestion dropdowns for Title, Role, Skill, Degree, and Language-proficiency fields, plus real spellcheck with right-click correction suggestions
 - **Snapshot backups** — take a named, timestamped snapshot at any point, then browse/restore/rename/delete from a table, with a confirmation warning before restoring
 - **Autosave status indicator** — "Saving…" / "All changes saved" in the toolbar
-- **Import / export JSON** — browser-native file selection and downloads preserve the existing resume format without sending resume data to a server
+- **Import / export JSON** — validated native résumé files plus JSON Resume 1.0 interchange; JSON Resume imports create a new profile and retain unmapped fields in visible custom sections
+- **Full backup / restore** — download all saved profiles, snapshots and theme settings; restoring first saves a rescue copy
+- **Paged print preview** — explicit A4 pages and bullet-boundary handling across all templates, fitted to the available viewport
+- **Local Job Match** — keyword coverage, aliases, missing terms and supporting résumé text; no account, model download or server upload
+- **Discoverable shortcuts** — Settings → Keyboard shortcuts, or Ctrl/Cmd+/
 - **Responsive browser workspace** — desktop, tablet, and narrow mobile layouts with ordinary browser spellcheck, extensions, and DevTools
 - **Tested** — Vitest unit tests plus a Playwright browser e2e suite; lint, tests, build, and browser smoke checks gate every push
 
@@ -65,9 +69,9 @@ See the [Roadmap wiki page](https://github.com/Abhisek571/openresume-builder/wik
 
 ## Branches & versions
 
-- **`master`** — latest stable release (currently **v2.2.6**); what the Releases page ships.
-- **`beta-3`** — the Beta 3 browser-first branch for the next major version (**v3**); it is not yet a tagged v3 release.
-- **`beta`** — _retired._ It was the 2.x prerelease channel through v2.2.x and is no longer used for new work; `beta-3` supersedes it.
+- **`master`** — the current version (**v3.0.0**, browser-first). The older 2.x desktop installers remain on the Releases page.
+- **`beta-3`** — _retired._ The v3 browser-first work, now merged into `master`.
+- **`beta`** — _retired._ It was the 2.x prerelease channel through v2.2.x and is no longer used for new work.
 
 ## Contributing / running from source
 

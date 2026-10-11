@@ -43,7 +43,10 @@ function validateSectionItems(section) {
   }
 
   const fields = OBJECT_ITEM_FIELDS[section.type];
-  if (!fields) return;
+  if (!fields) {
+    if (section.items.some((item) => typeof item !== 'string')) throw new ResumeImportError('Unknown section types must contain text items.', 'invalid-section-item');
+    return;
+  }
   for (const item of section.items) {
     if (!isRecord(item)) {
       throw new ResumeImportError(`${section.type} section items must be objects.`, 'invalid-section-item');
@@ -77,6 +80,7 @@ export function validateResumeData(data) {
     if (!isRecord(data.personal)) {
       throw new ResumeImportError('The resume is missing its personal details.', 'missing-personal');
     }
+    const sectionIds = new Set();
     for (const section of data.sections) {
       if (!isRecord(section) || !Array.isArray(section.items)) {
         throw new ResumeImportError('Every resume section must contain an items array.', 'invalid-section');
@@ -88,6 +92,9 @@ export function validateResumeData(data) {
         throw new ResumeImportError('Every resume section title must be text.', 'invalid-section-title');
       }
       validateSectionItems(section);
+      if (section.id !== undefined && (typeof section.id !== 'string' || !section.id || section.id === 'personal')) throw new ResumeImportError('Section IDs must be nonempty text other than personal.', 'invalid-section-id');
+      if (section.id !== undefined && sectionIds.has(section.id)) throw new ResumeImportError('Section IDs must be unique.', 'duplicate-section-id');
+      if (section.id !== undefined) sectionIds.add(section.id);
     }
     return data;
   }
@@ -101,18 +108,27 @@ export function validateResumeData(data) {
     if (data[key] !== undefined && !Array.isArray(data[key])) {
       throw new ResumeImportError(`The legacy resume field "${key}" must be an array.`, 'invalid-legacy-field');
     }
+    if (Array.isArray(data[key])) validateSectionItems({ type: key, items: data[key] });
   }
   return data;
 }
 
+export async function readJsonDocumentFile(file, maxMegabytes = 5) {
+  if (!file || typeof file.text !== 'function') throw new ResumeImportError('Select a JSON file to import.', 'missing-file');
+  if (file.size > maxMegabytes * 1024 * 1024) throw new ResumeImportError(`JSON files must be under ${maxMegabytes} MB.`, 'file-too-large');
+  let text;
+  try { text = await file.text(); }
+  catch (error) { throw new ResumeImportError('The selected file could not be read.', 'read-failed', { cause: error }); }
+  return parseJsonDocument(text);
+}
+
+function parseJsonDocument(text) {
+  try { return JSON.parse(text.replace(/^\uFEFF/, '')); }
+  catch (error) { throw new ResumeImportError('The selected file is not valid JSON.', 'invalid-json', { cause: error }); }
+}
+
 export function parseResumeJson(text) {
-  let parsed;
-  try {
-    parsed = JSON.parse(text);
-  } catch (error) {
-    throw new ResumeImportError('The selected file is not valid JSON.', 'invalid-json', { cause: error });
-  }
-  return validateResumeData(parsed);
+  return validateResumeData(parseJsonDocument(text));
 }
 
 export async function readResumeFile(file) {
@@ -123,11 +139,19 @@ export async function readResumeFile(file) {
     throw new ResumeImportError('Resume imports must use a .json file.', 'invalid-extension');
   }
 
+  if (file.size > 5 * 1024 * 1024) throw new ResumeImportError('Resume files must be under 5 MB.', 'file-too-large');
   let text;
   try {
     text = await file.text();
   } catch (error) {
     throw new ResumeImportError('The selected resume file could not be read.', 'read-failed', { cause: error });
   }
-  return normalizeResume(parseResumeJson(text));
+  const resume = normalizeResume(parseResumeJson(text));
+  const used = new Set(resume.sections.flatMap((s) => [s.id, ...s.items.map((i) => i?.id)]));
+  let counter = 0;
+  const id = () => { let value; do { value = `repaired-${++counter}`; } while (used.has(value)); used.add(value); return value; };
+  return { ...resume, sections: resume.sections.map((section) => ({
+    ...section, id: section.id || id(),
+    items: section.items.map((item) => isRecord(item) && item.id === undefined ? { ...item, id: id() } : item),
+  })) };
 }

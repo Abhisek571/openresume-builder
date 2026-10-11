@@ -4,3 +4,10 @@ release/
 .DS_Store
 *.log
 .env
+.claude/
+
+# Local planning / scratch docs (not for the public repo)
+ROADMAP-expanded.md
+SESSION-HANDOFF.md
+V3-execution-plan.md
+plan pic/

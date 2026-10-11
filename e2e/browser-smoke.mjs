@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { chromium } from 'playwright-core';
+import { checkRoadmap } from './browser-roadmap.mjs';
 
 const APP_URL = process.env.BROWSER_E2E_URL || 'http://127.0.0.1:5173/';
 const results = [];
@@ -108,7 +109,7 @@ async function openExport(page) {
 async function downloadFromExport(page, label) {
   await openExport(page);
   const [download] = await Promise.all([
-    page.waitForEvent('download', { timeout: 30000 }),
+    page.waitForEvent('download', { timeout: 30000 }).catch(async (error) => { console.error('Download UI status:', await page.locator('.status').innerText()); throw error; }),
     page.getByRole('button', { name: label, exact: true }).click(),
   ]);
   const failure = await download.failure();
@@ -160,8 +161,10 @@ async function checkResponsiveLayout(page, name, width, height) {
       innerWidth,
       documentWidth: document.documentElement.scrollWidth,
       toolbar: visible('.toolbar'),
-      workspace: visible('.workspace'),
-      detailsSurface: visible('.editor-pane') || visible('.preview-pane'),
+      // The semantic main uses display: contents in the desktop grid.
+      // Check its rendered navigation and content surfaces, not its absent box.
+      workspace: visible('.workspace-sidebar') && visible('.workspace-document'),
+      detailsSurface: visible('.workspace-edit') || visible('.preview-pane'),
     };
   });
   check(`${name} layout has no page-level horizontal overflow`, geometry.documentWidth <= geometry.innerWidth + 1,
@@ -211,7 +214,9 @@ async function main() {
     for (const label of ['JSON (.json)', 'Plain text (.txt)', 'Word (.docx)', 'Print / PDF']) {
       check(`${label} action is visible`, await page.getByRole('button', { name: label, exact: true }).isVisible());
     }
+    await page.locator('.document-actions > summary').click();
     check('Import JSON action is visible', await importButton.isVisible());
+    await page.locator('.document-actions > summary').click();
     await page.getByRole('button', { name: 'Export ▾', exact: true }).click();
 
     // Personal details and history.
@@ -219,18 +224,18 @@ async function main() {
     await nameInput.fill('Marcus Bennett');
     await page.waitForTimeout(200);
     check('personal name edit reflects in live preview',
-      await page.locator('.preview-pane h1').textContent() === 'Marcus Bennett');
+      await page.locator('.preview-pane .paged-pages h1').textContent() === 'Marcus Bennett');
 
     await page.waitForTimeout(700);
     await nameInput.fill('Marcus T. Bennett');
     await page.keyboard.press('Control+Z');
     await page.waitForTimeout(200);
     check('Ctrl+Z reverts the last name edit',
-      await page.locator('.preview-pane h1').textContent() === 'Marcus Bennett');
+      await page.locator('.preview-pane .paged-pages h1').textContent() === 'Marcus Bennett');
     await page.keyboard.press('Control+Y');
     await page.waitForTimeout(200);
     check('Ctrl+Y restores the undone edit',
-      await page.locator('.preview-pane h1').textContent() === 'Marcus T. Bennett');
+      await page.locator('.preview-pane .paged-pages h1').textContent() === 'Marcus T. Bennett');
     await page.waitForTimeout(700);
     await nameInput.fill('Marcus Bennett');
 
@@ -256,14 +261,14 @@ async function main() {
     await page.keyboard.press('Control+B');
     await page.waitForTimeout(150);
     check('Ctrl+B formats selected rich text without visible asterisks', !(await richField.textContent()).includes('*'));
-    let experienceHtml = await page.locator('.preview-pane .r-entry ul li:first-child, .preview-pane .r-entry .r-bullet-intro')
+    let experienceHtml = await page.locator('.preview-pane .paged-pages .r-entry ul li:first-child, .preview-pane .paged-pages .r-entry .r-bullet-intro')
       .first().innerHTML().catch(() => '');
     check('Ctrl+B survives into the preview as real <strong>', experienceHtml.includes('<strong>migration</strong>'), experienceHtml);
 
     await selectText(page, '.editor .rich-bullet-field', 'modular');
     await page.keyboard.press('Control+I');
     await page.waitForTimeout(150);
-    experienceHtml = await page.locator('.preview-pane .r-entry ul li:first-child, .preview-pane .r-entry .r-bullet-intro')
+    experienceHtml = await page.locator('.preview-pane .paged-pages .r-entry ul li:first-child, .preview-pane .paged-pages .r-entry .r-bullet-intro')
       .first().innerHTML().catch(() => '');
     check('Ctrl+I formats selected rich text as real <em>', experienceHtml.includes('<em>modular</em>'), experienceHtml);
     await page.waitForTimeout(600);
@@ -300,7 +305,7 @@ async function main() {
     check('paragraph button is enabled for the rich field', !(await paragraphButton.isDisabled()));
     await paragraphButton.click();
     check('paragraph promotion renders a plain intro in the preview',
-      await page.locator('.preview-pane .r-entry .r-bullet-intro').count() > 0);
+      await page.locator('.preview-pane .paged-pages .r-entry .r-bullet-intro').count() > 0);
 
     // Skills add/edit/format/delete.
     await page.locator('.nav-pane button.nav-item', { hasText: 'Skills' }).click();
@@ -311,8 +316,8 @@ async function main() {
     await newSkillField.click();
     await page.keyboard.type('Docker');
     check('typed skill appears as a stacked preview line',
-      (await page.locator('.preview-pane .r-skill-line').allTextContents()).includes('Docker'));
-    check('skills preview has no legacy chip pills', await page.locator('.preview-pane .r-chip').count() === 0);
+      (await page.locator('.preview-pane .paged-pages .r-skill-line').allTextContents()).includes('Docker'));
+    check('skills preview has no legacy chip pills', await page.locator('.preview-pane .paged-pages .r-chip').count() === 0);
     await newSkillField.locator('.rb-line').evaluate((line) => {
       const range = document.createRange();
       range.selectNodeContents(line);
@@ -331,11 +336,11 @@ async function main() {
     await customField.click();
     await page.keyboard.type('Speaker at JSConf Australia 2023');
     check('a single custom line renders without a list marker',
-      await page.locator('.preview-pane .resume-sheet > section:last-child li').count() === 0);
+      await page.locator('.preview-pane .paged-pages .resume-sheet .page-content > section:last-child li').count() === 0);
     await page.keyboard.press('Enter');
     await page.keyboard.type('Maintainer of three open-source npm packages');
     check('two custom lines render as a list',
-      await page.locator('.preview-pane .resume-sheet > section:last-child li').count() === 2);
+      await page.locator('.preview-pane .paged-pages .resume-sheet .page-content > section:last-child li').count() === 2);
     await page.waitForTimeout(700);
     await page.keyboard.type('X');
     await page.keyboard.press('Control+Z');
@@ -348,11 +353,11 @@ async function main() {
     await page.locator('.editor input[placeholder="Language"]').fill('English');
     await page.locator('.editor input[placeholder="Proficiency"]').fill('Native');
     check('languages render inline',
-      await page.locator('.preview-pane .r-languages').textContent() === 'English (Native)');
+      await page.locator('.preview-pane .paged-pages .r-languages').textContent() === 'English (Native)');
     await page.locator('.nav-pane select.nav-add').selectOption('links');
     await page.locator('.editor input[placeholder^="Label"]').fill('GitHub');
     await page.locator('.editor input[placeholder^="URL"]').fill('github.com/you');
-    const previewLink = page.locator('.preview-pane .r-links a');
+    const previewLink = page.locator('.preview-pane .paged-pages .r-links a');
     check('link shows its label in the preview', await previewLink.textContent() === 'GitHub');
     check('bare URL gets an https:// scheme', await previewLink.getAttribute('href') === 'https://github.com/you');
 
@@ -389,7 +394,7 @@ async function main() {
     await page.waitForTimeout(550);
     await page.reload({ waitUntil: 'load' });
     check('resume edits survive a browser refresh',
-      await page.locator('.preview-pane h1').textContent() === 'Persistent Browser User');
+      await page.locator('.preview-pane .paged-pages h1').textContent() === 'Persistent Browser User');
 
     // Browser downloads: validate filenames and representative file contents.
     const jsonDownload = await downloadFromExport(page, 'JSON (.json)');
@@ -409,14 +414,14 @@ async function main() {
 
     // Import via the browser file input, using the app's own exported format.
     exportedResume.personal.name = 'Imported Browser User';
-    await page.locator('.resume-file-input').setInputFiles({
+    await page.getByLabel('Native resume file').setInputFiles({
       name: 'browser-smoke-import.json',
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify(exportedResume)),
     });
     await page.waitForTimeout(250);
     check('JSON import replaces the active resume',
-      await page.locator('.preview-pane h1').textContent() === 'Imported Browser User');
+      await page.locator('.preview-pane .paged-pages h1').textContent() === 'Imported Browser User');
 
     // Print uses the normal browser workflow; the init-script spy avoids a native dialog.
     await openExport(page);
@@ -424,13 +429,13 @@ async function main() {
     check('Print / PDF triggers window.print',
       await page.evaluate(() => window.__browserSmokePrintCalls) === 1);
 
-    await page.getByRole('button', { name: 'Template', exact: true }).click();
+    await page.getByRole('button', { name: 'Design', exact: true }).click();
     await page.emulateMedia({ media: 'print' });
     check('printing from Template view renders only the selected resume',
       await page.locator('.resume-sheet:visible').count() === 1
-        && await page.locator('.print-resume .resume-sheet:visible').count() === 1);
+        && await page.locator('.print-resume .paged-pages .resume-sheet:visible').count() === 1);
     await page.emulateMedia({ media: 'screen' });
-    await page.getByRole('button', { name: 'Details', exact: true }).click();
+    await page.getByRole('button', { name: 'Content', exact: true }).click();
 
     // Explicit dark and System theme behavior, persistence, and paper output.
     await page.locator('.icon-btn[title="Settings"]').click();
@@ -440,9 +445,9 @@ async function main() {
     check('dark preference persists to localStorage',
       await page.evaluate(() => localStorage.getItem('resume-builder:theme')) === 'dark');
     check('resume sheet stays paper-white in dark mode',
-      await page.locator('.preview-pane .resume-sheet').evaluate((el) => getComputedStyle(el).backgroundColor) === 'rgb(255, 255, 255)');
+      await page.locator('.preview-pane .paged-pages .resume-sheet').evaluate((el) => getComputedStyle(el).backgroundColor) === 'rgb(255, 255, 255)');
     check('editor pane uses its dark surface in dark mode',
-      await page.locator('.editor-pane').evaluate((el) => getComputedStyle(el).backgroundColor) === 'rgb(13, 17, 23)');
+      await page.locator('.workspace-edit').evaluate((el) => getComputedStyle(el).backgroundColor) === 'rgb(34, 43, 37)');
     await page.reload({ waitUntil: 'load' });
     check('dark mode survives refresh', await page.locator('html').getAttribute('data-theme') === 'dark');
 
@@ -462,11 +467,12 @@ async function main() {
     await checkResponsiveLayout(page, 'desktop', 1440, 1000);
     await checkResponsiveLayout(page, 'tablet', 900, 900);
     await checkResponsiveLayout(page, 'mobile', 390, 844);
-    await page.getByRole('button', { name: 'Final Preview', exact: true }).click();
-    check('mobile Final Preview remains reachable', await page.locator('.final-preview-pane .resume-sheet').isVisible());
-    await page.getByRole('button', { name: 'Details', exact: true }).click();
-    check('mobile Details remains reachable', await page.locator('.editor-pane').isVisible());
+    await page.getByRole('button', { name: 'Expand preview', exact: true }).click();
+    check('mobile Final Preview remains reachable', await page.locator('.final-preview-pane .paged-pages .resume-sheet').isVisible());
+    await page.getByRole('button', { name: 'Content', exact: true }).click();
+    check('mobile Details remains reachable', await page.locator('.workspace-edit').isVisible());
 
+    await checkRoadmap(page, check, downloadFromExport);
     check('no uncaught page errors during the browser run', pageErrors.length === 0, pageErrors.join('; '));
   } finally {
     await context.close();
