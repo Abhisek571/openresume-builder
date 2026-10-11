@@ -90,7 +90,8 @@ export async function checkRoadmap(page, check, downloadFromExport) {
 
   const fixtures = {
     'one-page': { ...long, sections: [{ ...long.sections[0], items: long.sections[0].items.slice(0, 1) }] },
-    'spill': { ...long, sections: [{ ...long.sections[0], items: long.sections[0].items.slice(0, 6) }] },
+    // 8 entries so it spills to a second page even with narrower fallback fonts (e.g. no Georgia on Linux CI).
+    'spill': { ...long, sections: [{ ...long.sections[0], items: long.sections[0].items.slice(0, 8) }] },
     'tall-entry': { ...long, sections: [{ ...long.sections[0], items: [{ ...long.sections[0].items[0], bullets: Array.from({ length: 15 }, (_, i) => `Tall bullet ${i}: ` + 'Built accessible reliable software and verified results with users. '.repeat(8)) }] }] },
     'heading-boundary': { ...long, sections: [{ id: 'skills', type: 'skills', title: 'Skills', items: Array.from({ length: 30 }, (_, i) => `Skill ${i}`) }, { ...long.sections[0], items: long.sections[0].items.slice(0, 1) }] },
   };
