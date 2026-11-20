@@ -28,7 +28,7 @@
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",
     "playwright-core": "^1.61.1",
-    "vite": "^6.4.3",
+    "vite": "^6.4.5",
     "vitest": "^4.1.9",
     "wait-on": "^8.0.1"
   },
